@@ -686,6 +686,29 @@ void CalculateNonlocalInnerProductIndex(SPARC_OBJ *pSPARC)
 void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, 
                   NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm)
 {
+    FILE *psprk, *atm_inf, *proj, *hx, *HX, *X, *others;
+    psprk = fopen("pSPARC.bin","w");
+    atm_inf = fopen("atm_inf.bin","w");
+    proj = fopen("proj.bin","w");
+    hx = fopen("hx.bin","w");
+    HX = fopen("HX.bin","w");
+    X = fopen("X.bin","w");
+    others = fopen("others.bin","w");
+	
+    fwrite(pSPARC, sizeof(SPARC_OBJ), 1, psprk);
+    fwrite(Atom_Influence_nloc, sizeof(ATOM_NLOC_INFLUENCE_OBJ), 1, atm_inf);
+    fwrite(nlocProj, sizeof(NLOC_PROJ_OBJ), 1, proj);
+    fwrite(Hx, sizeof(double), ncol*DMnd, hx);
+    fwrite(x, sizeof(double), ncol*DMnd, X);
+    fwrite(ncol, sizeof(int), 1, others);
+    fwrite(DMnd, sizeof(int), 1, others);
+    fclose(psprk);
+    fclose(atm_inf);
+    fclose(proj);
+    fclose(hx);
+    fclose(X);
+    fclose(others);
+	
     int i, n, np, count;
     /* compute nonlocal operator times vector(s) */
     int ityp, iat, l, m, ldispl, lmax, ndc, atom_index;
@@ -761,6 +784,8 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
             free(Vnlx);
         }
     }
+    fwrite(Hx, sizeof(double), ncol*DMnd, HX);
+    fclose(HX);
     free(alpha);
 }
 
