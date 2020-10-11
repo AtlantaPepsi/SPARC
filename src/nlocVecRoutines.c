@@ -695,6 +695,9 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     X = fopen("X.bin","w");
     others = fopen("others.bin","w");
 	
+    //size_t atm_size = sizeof(ATOM_NLOC_INFLUENCE_OBJ);
+    //size_t proj_size = sizeof(NLOC_PROJ_OBJ);
+    //size_t sparc_size = sizeof(SPARC_OBJ);
     fwrite(pSPARC, sizeof(SPARC_OBJ), 1, psprk);
     fwrite(Atom_Influence_nloc, sizeof(ATOM_NLOC_INFLUENCE_OBJ), 1, atm_inf);
     fwrite(nlocProj, sizeof(NLOC_PROJ_OBJ), 1, proj);
@@ -787,6 +790,8 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     fwrite(Hx, sizeof(double), ncol*DMnd, HX);
     fclose(HX);
     free(alpha);
+    printf("done!\n");
+    exit(0);
 }
 
 
