@@ -17,7 +17,7 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
     memcpy(min_SPARC->nAtomv,pSPARC->nAtomv, sizeof(int)*pSPARC->Ntypes);
     memcpy(min_SPARC->IP_displ,pSPARC->IP_displ, sizeof(int)*(pSPARC->n_atom+1));
 
-
+	/*
     min_SPARC->lmax = (int *) malloc( pSPARC->Ntypes * sizeof(int) );
     min_SPARC->ppl = (int **)malloc( sizeof(int*) * pSPARC->Ntypes );
     min_SPARC->Gamma = (double **)malloc( sizeof(double*) * pSPARC->Ntypes );
@@ -34,7 +34,7 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
 
         min_SPARC->Gamma[i] = (double*) malloc( sizeof(double) * ppl_sum );
         memcpy(pSPARC->psd[i].Gamma,min_SPARC->Gamma[i],sizeof(double) * ppl_sum);
-    }
+    }*/
 }
 
 void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
@@ -109,7 +109,7 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
     // multiply the inner product and the nonlocal projector
     for (type = 0; type < pSPARC->Ntypes; type++) {
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
-        for (atom = 0; atom < Atom_Influence_nloc[type].n_atom; iat++) {
+        for (atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
             ndc = Atom_Influence_nloc[type].ndc[atom];
             atom_index = Atom_Influence_nloc[type].atom_index[atom];
             Vnlx = (double *)malloc( ndc * ncol * sizeof(double));
