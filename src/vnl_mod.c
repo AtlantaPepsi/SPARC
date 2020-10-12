@@ -24,11 +24,12 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
 
     for(int i = 0; i < pSPARC->Ntypes; i++)
     {
+        min_SPARC->lmax[i] = pSPARC->psd[i].lmax;
         min_SPARC->ppl[i] = (int*) malloc( sizeof(int) * (pSPARC->psd[i].lmax+1) );
         int ppl_sum;
         for (int j = 0; j <= pSPARC->psd[i].lmax; j++)
         {
-            min_SPARC->ppl[i][j] = pSPARC->psd[i].ppl[j];
+            (min_SPARC->ppl[i])[j] = pSPARC->psd[i].ppl[j];
             ppl_sum += pSPARC->psd[i].ppl[j];
         }
 
@@ -109,7 +110,7 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
     // multiply the inner product and the nonlocal projector
     for (type = 0; type < pSPARC->Ntypes; type++) {
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
-        for (atom = 0; atom < Atom_Influence_nloc[type].n_atom; iat++) {
+        for (atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
             ndc = Atom_Influence_nloc[type].ndc[atom];
             atom_index = Atom_Influence_nloc[type].atom_index[atom];
             Vnlx = (double *)malloc( ndc * ncol * sizeof(double));

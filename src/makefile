@@ -2,7 +2,7 @@
 # Warning: don't turn on USE_MKL and USE_SCALAPACK simultaneously
 # Set USE_MKL = 1 to compile with MKL BLAS, LAPACK, and ScaLAPACK
 # Set USE_MKL = 0 otherwise
-USE_MKL       = 0
+USE_MKL       = 1
 # Set USE_SCALAPACK = 1 to compile with non-MKL BLAS, LAPACK, and ScaLAPACK
 # Set USE_SCALAPACK = 0 to compile with non-MKL BLAS and LAPACK only
 USE_SCALAPACK = 0
@@ -16,8 +16,8 @@ DEBUG_MODE    = 0
 # Specify the path MKLROOT if it's not already set to compile with MKL, e.g,
 # MKLROOT = /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl
 
-# Specify the path to ScaLAPACK, LAPACK and BLAS if necessary, and 
-# add to LDFLAGS. Note that sometimes LDFLAGS already contains the default 
+# Specify the path to ScaLAPACK, LAPACK and BLAS if necessary, and
+# add to LDFLAGS. Note that sometimes LDFLAGS already contains the default
 # path to these libraries, or the libraries are located in the default search
 # path. In those cases, the following is not needed.
 # SCALAPACKROOT = /nv/hp27/qxu78/data/scalapack-2.0.2
@@ -57,7 +57,7 @@ ifeq ($(DEBUG_MODE), 1)
 CPPFLAGS += -Wall -g -DDEBUG
 endif
 
-# for old Intel compiler, use -qopenmp instead of -fopenmp. ICC 17 and later also accepts -fopenmp. 
+# for old Intel compiler, use -qopenmp instead of -fopenmp. ICC 17 and later also accepts -fopenmp.
 CFLAGS = -std=gnu99 -O3 -fopenmp
 
 OBJSC = main.o initialization.o readfiles.o atomdata.o parallelization.o relax.o tools.o md.o    \
@@ -65,7 +65,7 @@ OBJSC = main.o initialization.o readfiles.o atomdata.o parallelization.o relax.o
         occupation.o lapVecRoutines.o gradVecRoutines.o gradVecRoutinesKpt.o nlocVecRoutines.o   \
         hamiltonianVecRoutines.o lapVecOrth.o lapVecOrthKpt.o lapVecNonOrth.o lapVecNonOrthKpt.o \
         linearSolver.o mixing.o exchangeCorrelation.o eigenSolver.o eigenSolverKpt.o energy.o    \
-        forces.o stress.o pressure.o finalization.o
+        forces.o stress.o pressure.o finalization.o vnl_mod.o
 
 LIBBASE = ../lib/sparc
 TESTBASE = ../.ci
