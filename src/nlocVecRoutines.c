@@ -686,7 +686,7 @@ void CalculateNonlocalInnerProductIndex(SPARC_OBJ *pSPARC)
 void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, 
                   NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm)
 {
-    FILE *psprk, *atm_inf, *proj, *hx, *HX, *X, *others;
+    /*FILE *psprk, *atm_inf, *proj, *hx, *HX, *X, *others;
     psprk = fopen("pSPARC.bin","w");
     atm_inf = fopen("atm_inf.bin","w");
     proj = fopen("proj.bin","w");
@@ -710,7 +710,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     fclose(proj);
     fclose(hx);
     fclose(X);
-    fclose(others);
+    fclose(others);*/
 	
     int i, n, np, count;
     /* compute nonlocal operator times vector(s) */
@@ -787,8 +787,9 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
             free(Vnlx);
         }
     }
-    fwrite(Hx, sizeof(double), ncol*DMnd, HX);
-    fclose(HX);
+    /*fwrite(Hx, sizeof(double), ncol*DMnd, HX);
+    fclose(HX);*/
+    test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, MPI_Comm comm)
     free(alpha);
     printf("done!\n");
     exit(0);
