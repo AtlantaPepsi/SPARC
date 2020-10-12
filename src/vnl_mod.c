@@ -24,11 +24,12 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
 
     for(int i = 0; i < pSPARC->Ntypes; i++)
     {
+        min_SPARC->lmax[i] = pSPARC->psd[i].lmax;
         min_SPARC->ppl[i] = (int*) malloc( sizeof(int) * (pSPARC->psd[i].lmax+1) );
         int ppl_sum;
         for (int j = 0; j <= pSPARC->psd[i].lmax; j++)
         {
-            min_SPARC->ppl[i][j] = pSPARC->psd[i].ppl[j];
+            (min_SPARC->ppl[i])[j] = pSPARC->psd[i].ppl[j];
             ppl_sum += pSPARC->psd[i].ppl[j];
         }
 

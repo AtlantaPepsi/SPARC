@@ -7,10 +7,10 @@
  *          Phanish Suryanarayana <phanish.suryanarayana@ce.gatech.edu>
  *          Hua Huang <huangh223@gatech.edu>
  *          Edmond Chow <echow@cc.gatech.edu>
- * 
+ *
  * Copyright (c) 2020 Material Physics & Mechanics Group, Georgia Tech.
  */
- 
+
 #include <complex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,10 +36,10 @@
 
 
 /**
- * @brief   Find the list of all atoms that influence the processor 
+ * @brief   Find the list of all atoms that influence the processor
  *          domain in psi-domain.
  */
-void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_Influence_nloc, int *DMVertices, MPI_Comm comm) 
+void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_Influence_nloc, int *DMVertices, MPI_Comm comm)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -49,7 +49,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
     // processors that are not in the dmcomm will remain idle
     // on input make comm of processes with bandcomm_index or kptcomm_index MPI_COMM_NULL!
     if (comm == MPI_COMM_NULL) {
-        return; 
+        return;
     }
 
     double t1, t2;
@@ -58,18 +58,18 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
     int nproc_comm, rank_comm;
     MPI_Comm_size(comm, &nproc_comm);
     MPI_Comm_rank(comm, &rank_comm);
-    
+
     double DMxs, DMxe, DMys, DMye, DMzs, DMze;
     double Lx, Ly, Lz, rc, x0, y0, z0, x0_i, y0_i, z0_i, x2, y2, z2, r2, rc2, rcbox_x, rcbox_y, rcbox_z, x, y, z;
-    int count_overlap_nloc, count_overlap_nloc_sphere, ityp, i, j, k, count, i_DM, j_DM, k_DM, 
+    int count_overlap_nloc, count_overlap_nloc_sphere, ityp, i, j, k, count, i_DM, j_DM, k_DM,
         iat, atmcount, atmcount2, DMnx, DMny;
     int pp, qq, rr, ppmin, ppmax, qqmin, qqmax, rrmin, rrmax;
     int rc_xl, rc_xr, rc_yl, rc_yr, rc_zl, rc_zr, ndc;
-    
+
     Lx = pSPARC->range_x;
     Ly = pSPARC->range_y;
     Lz = pSPARC->range_z;
-    
+
     // TODO: notice the difference here from rb-domain, since nonlocal projectors decay drastically, using the fd-nodes as edges are more appropriate
     DMxs = pSPARC->xin + DMVertices[0] * pSPARC->delta_x;
     DMxe = pSPARC->xin + (DMVertices[1]) * pSPARC->delta_x; // note that this is not the actual edge, add BCx to get actual domain edge
@@ -77,30 +77,30 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
     DMye = (DMVertices[3]) * pSPARC->delta_y; // note that this is not the actual edge, add BCx to get actual domain edge
     DMzs = DMVertices[4] * pSPARC->delta_z;
     DMze = (DMVertices[5]) * pSPARC->delta_z; // note that this is not the actual edge, add BCx to get actual domain edge
-    
+
     // number of nodes in the local distributed domain
     DMnx = DMVertices[1] - DMVertices[0] + 1;
     DMny = DMVertices[3] - DMVertices[2] + 1;
 
     // TODO: in the future, it's better to save only the atom types that have influence on the local domain
     *Atom_Influence_nloc = (ATOM_NLOC_INFLUENCE_OBJ *)malloc(sizeof(ATOM_NLOC_INFLUENCE_OBJ) * pSPARC->Ntypes);
-    
+
     ATOM_NLOC_INFLUENCE_OBJ Atom_Influence_nloc_temp;
 
     // find which atoms have nonlocal influence on the distributed domain owned by current process
     atmcount = 0; atmcount2 = 0;
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         rc = 0.0;
-        // find max rc 
+        // find max rc
         for (i = 0; i <= pSPARC->psd[ityp].lmax; i++) {
             rc = max(rc, pSPARC->psd[ityp].rc[i]);
         }
         rc2 = rc * rc;
-        
+
         if(pSPARC->cell_typ == 0) {
-            rcbox_x = rcbox_y = rcbox_z = rc;            
+            rcbox_x = rcbox_y = rcbox_z = rc;
         } else {
-            // TODO: make an appropriate box in initialization 
+            // TODO: make an appropriate box in initialization
             rcbox_x = pSPARC->CUTOFF_x[ityp];
             rcbox_y = pSPARC->CUTOFF_y[ityp];
             rcbox_z = pSPARC->CUTOFF_z[ityp];
@@ -143,7 +143,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
                 }
             }
         } // end for loop over atoms of each type, for the first time
-        
+
         Atom_Influence_nloc_temp.n_atom = count_overlap_nloc;
         Atom_Influence_nloc_temp.coords = (double *)malloc(sizeof(double) * count_overlap_nloc * 3);
         Atom_Influence_nloc_temp.atom_index = (int *)malloc(sizeof(int) * count_overlap_nloc);
@@ -172,7 +172,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
             free(Atom_Influence_nloc_temp.grid_pos);
             continue;
         }
-        
+
         // loop over atoms of this type again to find overlapping region and atom info
         count_overlap_nloc = 0;
         count_overlap_nloc_sphere = 0;
@@ -195,7 +195,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
                 rrmax = floor((rcbox_z + Lz - z0) / Lz + TEMP_TOL);
                 rrmin = -floor((rcbox_z + z0) / Lz + TEMP_TOL);
             }
-            
+
             // check if this image interacts with the local distributed domain
             for (rr = rrmin; rr <= rrmax; rr++) {
                 z0_i = z0 + Lz * rr; // z coord of image atom
@@ -206,15 +206,15 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
                     for (pp = ppmin; pp <= ppmax; pp++) {
                         x0_i = x0 + Lx * pp; // x coord of image atom
                         if ((x0_i < DMxs - rcbox_x) || (x0_i >= DMxe + rcbox_x)) continue;
-                        
+
                         // store coordinates of the overlapping atom
                         Atom_Influence_nloc_temp.coords[count_overlap_nloc*3  ] = x0_i;
                         Atom_Influence_nloc_temp.coords[count_overlap_nloc*3+1] = y0_i;
                         Atom_Influence_nloc_temp.coords[count_overlap_nloc*3+2] = z0_i;
-                        
+
                         // record the original atom index this image atom corresponds to
                         Atom_Influence_nloc_temp.atom_index[count_overlap_nloc] = atmcount2-1;
-                        
+
                         // find start & end nodes of the rc-region of the image atom
                         // This way, we try to make sure all points inside rc-region
                         // is strictly less that rc distance away from the image atom
@@ -224,7 +224,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
                         rc_yr = floor((y0_i + rcbox_y)/pSPARC->delta_y);
                         rc_zl = ceil( (z0_i - rcbox_z)/pSPARC->delta_z);
                         rc_zr = floor((z0_i + rcbox_z)/pSPARC->delta_z);
-                        
+
                         // TODO: check if rc-region is out of fundamental domain for BC == 1!
                         // find overlap of rc-region of the image and the local dist. domain
                         Atom_Influence_nloc_temp.xs[count_overlap_nloc] = max(DMVertices[0], rc_xl);
@@ -238,7 +238,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
                         ndc = (Atom_Influence_nloc_temp.xe[count_overlap_nloc] - Atom_Influence_nloc_temp.xs[count_overlap_nloc] + 1)
                             * (Atom_Influence_nloc_temp.ye[count_overlap_nloc] - Atom_Influence_nloc_temp.ys[count_overlap_nloc] + 1)
                             * (Atom_Influence_nloc_temp.ze[count_overlap_nloc] - Atom_Influence_nloc_temp.zs[count_overlap_nloc] + 1);
-                        
+
                         // first allocate memory for the rectangular rc-region, resize later to the spherical rc-region
                         Atom_Influence_nloc_temp.grid_pos[count_overlap_nloc] = (int *)malloc(sizeof(int) * ndc);
                         if(pSPARC->cell_typ == 0) {
@@ -274,7 +274,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
                                     for (i = Atom_Influence_nloc_temp.xs[count_overlap_nloc]; i <= Atom_Influence_nloc_temp.xe[count_overlap_nloc]; i++) {
                                         i_DM = i - DMVertices[0];
                                         x = i * pSPARC->delta_x - x0_i;
-                                        r2 = pSPARC->metricT[0] * (x*x) + pSPARC->metricT[1] * (x*y) + pSPARC->metricT[2] * (x*z) 
+                                        r2 = pSPARC->metricT[0] * (x*x) + pSPARC->metricT[1] * (x*y) + pSPARC->metricT[2] * (x*z)
                                            + pSPARC->metricT[4] * (y*y) + pSPARC->metricT[5] * (y*z) + pSPARC->metricT[8] * (z*z);
                                         if (r2 <= rc2) {
                                             Atom_Influence_nloc_temp.grid_pos[count_overlap_nloc][count] = k_DM * (DMnx * DMny) + j_DM * DMnx + i_DM;
@@ -282,14 +282,14 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
                                         }
                                     }
                                 }
-                            } 
+                            }
                         } else {
                             count = 0;
-                        }   
+                        }
                         // TODO: in some cases count is 0! check if ndc is 0 and remove those!
                         Atom_Influence_nloc_temp.ndc[count_overlap_nloc] = count;
                         count_overlap_nloc++;
-                        
+
                         if (count > 0) {
                             count_overlap_nloc_sphere++;
                         }
@@ -297,7 +297,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
                 }
             }
         }
-        
+
         if (count_overlap_nloc_sphere == 0) {
             (*Atom_Influence_nloc)[ityp].n_atom = 0;
             atmcount2 = atmcount;
@@ -328,7 +328,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
         (*Atom_Influence_nloc)[ityp].ze = (int *)malloc(sizeof(int) * count_overlap_nloc_sphere);
         (*Atom_Influence_nloc)[ityp].ndc = (int *)malloc(sizeof(int) * count_overlap_nloc_sphere);
         (*Atom_Influence_nloc)[ityp].grid_pos = (int **)malloc(sizeof(int*) * count_overlap_nloc_sphere);
-        
+
         count = 0;
         for (i = 0; i < count_overlap_nloc; i++) {
             if ( Atom_Influence_nloc_temp.ndc[i] > 0 ) {
@@ -352,7 +352,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
             }
             free(Atom_Influence_nloc_temp.grid_pos[i]);
         }
-        
+
         free(Atom_Influence_nloc_temp.coords);
         free(Atom_Influence_nloc_temp.atom_index);
         free(Atom_Influence_nloc_temp.xs);
@@ -364,7 +364,7 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
         free(Atom_Influence_nloc_temp.ndc);
         free(Atom_Influence_nloc_temp.grid_pos);
     }
-    
+
     t2 = MPI_Wtime();
 #ifdef DEBUG
     if(!rank) printf(GRN"rank = %d, time for nonlocal influencing atoms: %.3f ms\n"RESET, rank, (t2-t1)*1e3);
@@ -375,16 +375,16 @@ void GetInfluencingAtoms_nloc(SPARC_OBJ *pSPARC, ATOM_NLOC_INFLUENCE_OBJ **Atom_
 
 
 /**
- * @brief   Calculate nonlocal projectors. 
+ * @brief   Calculate nonlocal projectors.
  */
-void CalculateNonlocalProjectors(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj, 
+void CalculateNonlocalProjectors(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj,
         ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, int *DMVertices, MPI_Comm comm)
 {
     // processors that are not in the dmcomm will continue
     if (comm == MPI_COMM_NULL) {
         return; // upon input, make sure process with bandcomm_index < 0 provides MPI_COMM_NULL
     }
-    
+
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -393,17 +393,17 @@ void CalculateNonlocalProjectors(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj,
     t_tot = t_old = 0.0;
 #ifdef DEBUG
     if (rank == 0) printf("Calculate nonlocal projectors ... \n");
-#endif    
+#endif
     int l, np, lcount, lcount2, m, psd_len, col_count, indx, ityp, iat, ipos, ndc, lloc, lmax, DMnx, DMny;
     int i_DM, j_DM, k_DM;
     double x0_i, y0_i, z0_i, *rc_pos_x, *rc_pos_y, *rc_pos_z, *rc_pos_r, *Ylm, *UdV_sort, x2, y2, z2, x, y, z;
-    
+
     // number of nodes in the local distributed domain
     DMnx = DMVertices[1] - DMVertices[0] + 1;
     DMny = DMVertices[3] - DMVertices[2] + 1;
 
     (*nlocProj) = (NLOC_PROJ_OBJ *)malloc( sizeof(NLOC_PROJ_OBJ) * pSPARC->Ntypes ); // TODO: deallocate!!
-    for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) { 
+    for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         // allocate memory for projectors
         (*nlocProj)[ityp].Chi = (double **)malloc( sizeof(double *) * Atom_Influence_nloc[ityp].n_atom);
         lloc = pSPARC->localPsd[ityp]; // local projector index
@@ -422,8 +422,8 @@ void CalculateNonlocalProjectors(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj,
             y0_i = Atom_Influence_nloc[ityp].coords[iat*3+1];
             z0_i = Atom_Influence_nloc[ityp].coords[iat*3+2];
             // grid nodes in (spherical) rc-domain
-            ndc = Atom_Influence_nloc[ityp].ndc[iat]; 
-            (*nlocProj)[ityp].Chi[iat] = (double *)malloc( sizeof(double) * ndc * (*nlocProj)[ityp].nproj); 
+            ndc = Atom_Influence_nloc[ityp].ndc[iat];
+            (*nlocProj)[ityp].Chi[iat] = (double *)malloc( sizeof(double) * ndc * (*nlocProj)[ityp].nproj);
             rc_pos_x = (double *)malloc( sizeof(double) * ndc );
             rc_pos_y = (double *)malloc( sizeof(double) * ndc );
             rc_pos_z = (double *)malloc( sizeof(double) * ndc );
@@ -462,7 +462,7 @@ void CalculateNonlocalProjectors(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj,
                     x2 = x * x; y2 = y * y; z2 = z*z;
                     rc_pos_r[ipos] = sqrt(x2+y2+z2);
                 }
-            }    
+            }
 
             lcount = lcount2 = col_count = 0;
             // multiply spherical harmonics and UdV
@@ -472,11 +472,11 @@ void CalculateNonlocalProjectors(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj,
                 for (np = 0; np < pSPARC->psd[ityp].ppl[l]; np++) {
                     // find UdV using spline interpolation
 					if (pSPARC->psd[ityp].is_r_uniform == 1) {
-						SplineInterpUniform(pSPARC->psd[ityp].RadialGrid, pSPARC->psd[ityp].UdV+lcount2*psd_len, psd_len, 
+						SplineInterpUniform(pSPARC->psd[ityp].RadialGrid, pSPARC->psd[ityp].UdV+lcount2*psd_len, psd_len,
 						                    rc_pos_r, UdV_sort, ndc, pSPARC->psd[ityp].SplineFitUdV+lcount*psd_len);
 					} else {
-						SplineInterpNonuniform(pSPARC->psd[ityp].RadialGrid, pSPARC->psd[ityp].UdV+lcount2*psd_len, psd_len, 
-						                       rc_pos_r, UdV_sort, ndc, pSPARC->psd[ityp].SplineFitUdV+lcount*psd_len); 
+						SplineInterpNonuniform(pSPARC->psd[ityp].RadialGrid, pSPARC->psd[ityp].UdV+lcount2*psd_len, psd_len,
+						                       rc_pos_r, UdV_sort, ndc, pSPARC->psd[ityp].SplineFitUdV+lcount*psd_len);
 					}
                     for (m = -l; m <= l; m++) {
                         t1 = MPI_Wtime();
@@ -484,7 +484,7 @@ void CalculateNonlocalProjectors(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj,
                         RealSphericalHarmonic(ndc, rc_pos_x, rc_pos_y, rc_pos_z, rc_pos_r, l, m, Ylm);
                         t2 = MPI_Wtime();
                         t_tot += t2 - t1;
-                        
+
                         // calculate Chi = UdV * Ylm
                         for (ipos = 0; ipos < ndc; ipos++) {
                             (*nlocProj)[ityp].Chi[iat][col_count*ndc+ipos] = Ylm[ipos] * UdV_sort[ipos];
@@ -502,44 +502,44 @@ void CalculateNonlocalProjectors(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj,
             free(UdV_sort);
         }
     }
-#ifdef DEBUG    
+#ifdef DEBUG
     if(!rank) printf(BLU "rank = %d, Time for spherical harmonics: %.3f ms\n" RESET, rank, t_tot*1e3);
-#endif    
+#endif
 }
 
 
 
 /**
- * @brief   Calculate nonlocal projectors. 
+ * @brief   Calculate nonlocal projectors.
  */
-void CalculateNonlocalProjectors_kpt(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj, 
+void CalculateNonlocalProjectors_kpt(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj,
         ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, int *DMVertices, MPI_Comm comm)
 {
     // processors that are not in the dmcomm will continue
     if (comm == MPI_COMM_NULL) {
         return; // upon input, make sure process with bandcomm_index < 0 provides MPI_COMM_NULL
     }
-    
+
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    
+
     double t1, t2, t_tot, t_old;
 
     t_tot = t_old = 0.0;
 #ifdef DEBUG
     if (rank == 0) printf("Calculate nonlocal projectors ... \n");
-#endif    
+#endif
     int l, np, lcount, lcount2, m, psd_len, col_count, indx, ityp, iat, ipos, ndc, lloc, lmax, DMnx, DMny;
     int i_DM, j_DM, k_DM;
     double x0_i, y0_i, z0_i, *rc_pos_x, *rc_pos_y, *rc_pos_z, *rc_pos_r, *Ylm, *UdV_sort, x2, y2, z2, x, y, z;
-    
+
     // number of nodes in the local distributed domain
     DMnx = DMVertices[1] - DMVertices[0] + 1;
     DMny = DMVertices[3] - DMVertices[2] + 1;
-    // DMnz = DMVertices[5] - DMVertices[4] + 1;  
+    // DMnz = DMVertices[5] - DMVertices[4] + 1;
 
     (*nlocProj) = (NLOC_PROJ_OBJ *)malloc( sizeof(NLOC_PROJ_OBJ) * pSPARC->Ntypes ); // TODO: deallocate!!
-    for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) { 
+    for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         // allocate memory for projectors
         (*nlocProj)[ityp].Chi_c = (double complex **)malloc( sizeof(double complex *) * Atom_Influence_nloc[ityp].n_atom);
         lloc = pSPARC->localPsd[ityp]; // local projector index
@@ -558,7 +558,7 @@ void CalculateNonlocalProjectors_kpt(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj
             y0_i = Atom_Influence_nloc[ityp].coords[iat*3+1];
             z0_i = Atom_Influence_nloc[ityp].coords[iat*3+2];
             // grid nodes in (spherical) rc-domain
-            ndc = Atom_Influence_nloc[ityp].ndc[iat]; 
+            ndc = Atom_Influence_nloc[ityp].ndc[iat];
             (*nlocProj)[ityp].Chi_c[iat] = (double complex *)malloc( sizeof(double complex) * ndc * (*nlocProj)[ityp].nproj);
             rc_pos_x = (double *)malloc( sizeof(double) * ndc );
             rc_pos_y = (double *)malloc( sizeof(double) * ndc );
@@ -598,7 +598,7 @@ void CalculateNonlocalProjectors_kpt(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj
                     x2 = x * x; y2 = y * y; z2 = z*z;
                     rc_pos_r[ipos] = sqrt(x2+y2+z2);
                 }
-            }    
+            }
 
             lcount = lcount2 = col_count = 0;
             // multiply spherical harmonics and UdV
@@ -608,11 +608,11 @@ void CalculateNonlocalProjectors_kpt(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj
                 for (np = 0; np < pSPARC->psd[ityp].ppl[l]; np++) {
                     // find UdV using spline interpolation
                     if (pSPARC->psd[ityp].is_r_uniform == 1) {
-						SplineInterpUniform(pSPARC->psd[ityp].RadialGrid, pSPARC->psd[ityp].UdV+lcount2*psd_len, psd_len, 
+						SplineInterpUniform(pSPARC->psd[ityp].RadialGrid, pSPARC->psd[ityp].UdV+lcount2*psd_len, psd_len,
 						                    rc_pos_r, UdV_sort, ndc, pSPARC->psd[ityp].SplineFitUdV+lcount*psd_len);
 					} else {
-						SplineInterpNonuniform(pSPARC->psd[ityp].RadialGrid, pSPARC->psd[ityp].UdV+lcount2*psd_len, psd_len, 
-						                       rc_pos_r, UdV_sort, ndc, pSPARC->psd[ityp].SplineFitUdV+lcount*psd_len); 
+						SplineInterpNonuniform(pSPARC->psd[ityp].RadialGrid, pSPARC->psd[ityp].UdV+lcount2*psd_len, psd_len,
+						                       rc_pos_r, UdV_sort, ndc, pSPARC->psd[ityp].SplineFitUdV+lcount*psd_len);
 					}
                     for (m = -l; m <= l; m++) {
                         t1 = MPI_Wtime();
@@ -638,19 +638,19 @@ void CalculateNonlocalProjectors_kpt(SPARC_OBJ *pSPARC, NLOC_PROJ_OBJ **nlocProj
             free(UdV_sort);
         }
     }
-    
-#ifdef DEBUG    
+
+#ifdef DEBUG
     if(!rank) printf(BLU"rank = %d, Time for spherical harmonics: %.3f ms\n"RESET, rank, t_tot*1e3);
-#endif    
+#endif
 }
 
 
 
 /**
- * @brief   Calculate indices for storing nonlocal inner product in an array. 
+ * @brief   Calculate indices for storing nonlocal inner product in an array.
  *
  *          We will store the inner product < Chi_Jlm, x_n > in a continuous array "alpha",
- *          the dimensions are in the order: <lm>, n, J. Here we find out the sizes of the 
+ *          the dimensions are in the order: <lm>, n, J. Here we find out the sizes of the
  *          inner product corresponding to atom J, and the total number of inner products
  *          corresponding to each vector x_n.
  */
@@ -659,7 +659,7 @@ void CalculateNonlocalInnerProductIndex(SPARC_OBJ *pSPARC)
     int ityp, iat, l, lmax, lloc, atom_index, nproj;
 
     pSPARC->IP_displ = (int *)malloc( sizeof(int) * (pSPARC->n_atom+1));
-    
+
     atom_index = 0;
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         lmax = pSPARC->psd[ityp].lmax;
@@ -683,7 +683,7 @@ void CalculateNonlocalInnerProductIndex(SPARC_OBJ *pSPARC)
 /**
  * @brief   Calculate Vnl times vectors in a matrix-free way.
  */
-void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, 
+void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
                   NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm)
 {
     /*FILE *psprk, *atm_inf, *proj, *hx, *HX, *X, *others;
@@ -694,7 +694,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     HX = fopen("HX.bin","w");
     X = fopen("X.bin","w");
     others = fopen("others.bin","w");
-	
+
     //size_t atm_size = sizeof(ATOM_NLOC_INFLUENCE_OBJ);
     //size_t proj_size = sizeof(NLOC_PROJ_OBJ);
     //size_t sparc_size = sizeof(SPARC_OBJ);
@@ -711,7 +711,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     fclose(hx);
     fclose(X);
     fclose(others);*/
-	
+
     int i, n, np, count;
     /* compute nonlocal operator times vector(s) */
     int ityp, iat, l, m, ldispl, lmax, ndc, atom_index;
@@ -723,7 +723,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
         //lmax = pSPARC->psd[ityp].lmax;
         if (! nlocProj[ityp].nproj) continue; // this is typical for hydrogen
         for (iat = 0; iat < Atom_Influence_nloc[ityp].n_atom; iat++) {
-            ndc = Atom_Influence_nloc[ityp].ndc[iat]; 
+            ndc = Atom_Influence_nloc[ityp].ndc[iat];
             x_rc = (double *)malloc( ndc * ncol * sizeof(double));
             atom_index = Atom_Influence_nloc[ityp].atom_index[iat];
             for (n = 0; n < ncol; n++) {
@@ -731,9 +731,9 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
                     x_rc[n*ndc+i] = x[n*DMnd + Atom_Influence_nloc[ityp].grid_pos[iat][i]];
                 }
             }
-            cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, nlocProj[ityp].nproj, ncol, ndc, 
-                pSPARC->dV, nlocProj[ityp].Chi[iat], ndc, x_rc, ndc, 1.0, 
-                alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj);          
+            cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, nlocProj[ityp].nproj, ncol, ndc,
+                pSPARC->dV, nlocProj[ityp].Chi[iat], ndc, x_rc, ndc, 1.0,
+                alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj);
             free(x_rc);
         }
     }
@@ -744,7 +744,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     if (commsize > 1) {
         MPI_Allreduce(MPI_IN_PLACE, alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol, MPI_DOUBLE, MPI_SUM, comm);
     }
-    
+
     // go over all atoms and multiply gamma_Jl to the inner product
     count = 0;
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
@@ -774,32 +774,36 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         if (! nlocProj[ityp].nproj) continue; // this is typical for hydrogen
         for (iat = 0; iat < Atom_Influence_nloc[ityp].n_atom; iat++) {
-            ndc = Atom_Influence_nloc[ityp].ndc[iat]; 
+            ndc = Atom_Influence_nloc[ityp].ndc[iat];
             atom_index = Atom_Influence_nloc[ityp].atom_index[iat];
             Vnlx = (double *)malloc( ndc * ncol * sizeof(double));
-            cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ndc, ncol, nlocProj[ityp].nproj, 1.0, nlocProj[ityp].Chi[iat], ndc, 
-                        alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj, 0.0, Vnlx, ndc); 
+            cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ndc, ncol, nlocProj[ityp].nproj, 1.0, nlocProj[ityp].Chi[iat], ndc,
+                        alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj, 0.0, Vnlx, ndc);
             for (n = 0; n < ncol; n++) {
                 for (i = 0; i < ndc; i++) {
                     Hx[n*DMnd + Atom_Influence_nloc[ityp].grid_pos[iat][i]] += Vnlx[n*ndc+i];
                 }
-            }     
+            }
             free(Vnlx);
         }
     }
     /*fwrite(Hx, sizeof(double), ncol*DMnd, HX);
     fclose(HX);*/
+
     test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm);
+
+    //test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm);
+
     free(alpha);
     printf("done!\n");
-    exit(0);
+    //exit(0);
 }
 
 
 /**
  * @brief   Calculate Vnl times vectors in a matrix-free way with Bloch factor
  */
-void Vnl_vec_mult_kpt(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, 
+void Vnl_vec_mult_kpt(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
                       NLOC_PROJ_OBJ *nlocProj, int ncol, double complex *x, double complex *Hx, int kpt, MPI_Comm comm)
 {
     int i, n, np, count;
@@ -816,7 +820,7 @@ void Vnl_vec_mult_kpt(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ
     double k3 = pSPARC->k3_loc[kpt];
     double theta;
     double complex bloch_fac, a, b;
-    
+
     //first find inner product
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         if (! nlocProj[ityp].nproj) continue; // this is typical for hydrogen
@@ -828,7 +832,7 @@ void Vnl_vec_mult_kpt(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ
             bloch_fac = cos(theta) + sin(theta) * I;
             a = bloch_fac * pSPARC->dV;
             b = 1.0;
-            ndc = Atom_Influence_nloc[ityp].ndc[iat]; 
+            ndc = Atom_Influence_nloc[ityp].ndc[iat];
             x_rc = (double complex *)malloc( ndc * ncol * sizeof(double complex));
             atom_index = Atom_Influence_nloc[ityp].atom_index[iat];
             for (n = 0; n < ncol; n++) {
@@ -836,8 +840,8 @@ void Vnl_vec_mult_kpt(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ
                     x_rc[n*ndc+i] = x[n*DMnd + Atom_Influence_nloc[ityp].grid_pos[iat][i]];
                 }
             }
-            cblas_zgemm(CblasColMajor, CblasTrans, CblasNoTrans, nlocProj[ityp].nproj, ncol, ndc, 
-                &a, nlocProj[ityp].Chi_c[iat], ndc, x_rc, ndc, &b, 
+            cblas_zgemm(CblasColMajor, CblasTrans, CblasNoTrans, nlocProj[ityp].nproj, ncol, ndc,
+                &a, nlocProj[ityp].Chi_c[iat], ndc, x_rc, ndc, &b,
                 alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj);
             free(x_rc);
         }
@@ -849,7 +853,7 @@ void Vnl_vec_mult_kpt(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ
     if (commsize > 1) {
         MPI_Allreduce(MPI_IN_PLACE, alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol, MPI_DOUBLE_COMPLEX, MPI_SUM, comm);
     }
-    
+
     // go over all atoms and multiply gamma_Jl to the inner product
     count = 0;
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
@@ -874,7 +878,7 @@ void Vnl_vec_mult_kpt(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ
             }
         }
     }
-        
+
     // multiply the inner product and the nonlocal projector
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         if (! nlocProj[ityp].nproj) continue; // this is typical for hydrogen
@@ -885,11 +889,11 @@ void Vnl_vec_mult_kpt(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ
             theta = -k1 * (floor(x0_i/Lx) * Lx) - k2 * (floor(y0_i/Ly) * Ly) - k3 * (floor(z0_i/Lz) * Lz);
             bloch_fac = cos(theta) - sin(theta) * I;
             b = 0.0;
-            ndc = Atom_Influence_nloc[ityp].ndc[iat]; 
+            ndc = Atom_Influence_nloc[ityp].ndc[iat];
             atom_index = Atom_Influence_nloc[ityp].atom_index[iat];
             Vnlx = (double complex *)malloc( ndc * ncol * sizeof(double complex));
-            cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ndc, ncol, nlocProj[ityp].nproj, &bloch_fac, nlocProj[ityp].Chi_c[iat], ndc, 
-                          alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj, &b, Vnlx, ndc); 
+            cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ndc, ncol, nlocProj[ityp].nproj, &bloch_fac, nlocProj[ityp].Chi_c[iat], ndc,
+                          alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj, &b, Vnlx, ndc);
             for (n = 0; n < ncol; n++) {
                 for (i = 0; i < ndc; i++) {
                     Hx[n*DMnd + Atom_Influence_nloc[ityp].grid_pos[iat][i]] += Vnlx[n*ndc+i];

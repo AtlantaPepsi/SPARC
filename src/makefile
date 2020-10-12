@@ -16,8 +16,8 @@ DEBUG_MODE    = 0
 # Specify the path MKLROOT if it's not already set to compile with MKL, e.g,
 # MKLROOT = /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl
 
-# Specify the path to ScaLAPACK, LAPACK and BLAS if necessary, and 
-# add to LDFLAGS. Note that sometimes LDFLAGS already contains the default 
+# Specify the path to ScaLAPACK, LAPACK and BLAS if necessary, and
+# add to LDFLAGS. Note that sometimes LDFLAGS already contains the default
 # path to these libraries, or the libraries are located in the default search
 # path. In those cases, the following is not needed.
 # SCALAPACKROOT = /nv/hp27/qxu78/data/scalapack-2.0.2
@@ -57,7 +57,7 @@ ifeq ($(DEBUG_MODE), 1)
 CPPFLAGS += -Wall -g -DDEBUG
 endif
 
-# for old Intel compiler, use -qopenmp instead of -fopenmp. ICC 17 and later also accepts -fopenmp. 
+# for old Intel compiler, use -qopenmp instead of -fopenmp. ICC 17 and later also accepts -fopenmp.
 CFLAGS = -std=gnu99 -O3 -fopenmp
 
 OBJSC = main.o initialization.o readfiles.o atomdata.o parallelization.o relax.o tools.o md.o    \
