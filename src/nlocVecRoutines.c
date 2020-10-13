@@ -715,7 +715,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     hx = (double *)malloc(DMnd * ncol * sizeof(double));
     memcpy(hx, Hx, DMnd * ncol * sizeof(double));
 
-    alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
+    //alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
 
     int i, n, np, count;
     /* compute nonlocal operator times vector(s) */

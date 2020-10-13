@@ -45,5 +45,6 @@ void test_vnl(
     int ncol,
     double *x,
     double *Hx,
-    MPI_Comm comm
+    MPI_Comm comm,
+    double *hx
 );

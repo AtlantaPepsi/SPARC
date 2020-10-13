@@ -26,7 +26,7 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
     {
         min_SPARC->lmax[i] = pSPARC->psd[i].lmax;
         min_SPARC->ppl[i] = (int*) malloc( sizeof(int) * (pSPARC->psd[i].lmax+1) );
-        int ppl_sum;
+        int ppl_sum = 0;
         for (int j = 0; j <= pSPARC->psd[i].lmax; j++)
         {
             (min_SPARC->ppl[i])[j] = pSPARC->psd[i].ppl[j];
@@ -34,7 +34,7 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
         }
 
         min_SPARC->Gamma[i] = (double*) malloc( sizeof(double) * ppl_sum );
-        memcpy(pSPARC->psd[i].Gamma,min_SPARC->Gamma[i],sizeof(double) * ppl_sum);
+        memcpy(min_SPARC->Gamma[i],pSPARC->psd[i].Gamma,sizeof(double) * ppl_sum);
     }
 }
 
@@ -93,15 +93,15 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
                 for (l = 0; l <= lmax; l++) {
                     // skip the local l
                     if (l == lloc) {
-                        ldispl += pSPARC->ppl[type][l];                         //!
+                        ldispl += (pSPARC->ppl[type])[l];                         //!
                         continue;
                     }
-                    for (np = 0; np < pSPARC->ppl[type][l]; np++) {
+                    for (np = 0; np < (pSPARC->ppl[type])[l]; np++) {
                         for (m = -l; m <= l; m++) {
-                            alpha[count++] *= pSPARC->Gamma[type][ldispl+np];//!
+                            alpha[count++] *= (pSPARC->Gamma[type])[ldispl+np];//!
                         }
                     }
-                    ldispl += pSPARC->ppl[type][l];
+                    ldispl += (pSPARC->ppl[type])[l];
                 }
             }
         }
