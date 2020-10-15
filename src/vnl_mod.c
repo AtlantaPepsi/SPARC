@@ -1,6 +1,7 @@
 #include "vnl_mod.h"
 #include <assert.h>
 #include <math.h>
+#include "omp.h"
 //#include "finalization.h"
 
 void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
@@ -19,6 +20,7 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
 
 
     min_SPARC->lmax = (int *) malloc( pSPARC->Ntypes * sizeof(int) );
+    min_SPARC->l_sum = (int *) malloc( pSPARC->Ntypes * sizeof(int) );
     min_SPARC->ppl = (int **)malloc( sizeof(int*) * pSPARC->Ntypes );
     min_SPARC->Gamma = (double **)malloc( sizeof(double*) * pSPARC->Ntypes );
 
@@ -32,10 +34,22 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
             (min_SPARC->ppl[i])[j] = pSPARC->psd[i].ppl[j];
             ppl_sum += pSPARC->psd[i].ppl[j];
         }
-
+        l_sum[i] = ppl_sum;
         min_SPARC->Gamma[i] = (double*) malloc( sizeof(double) * ppl_sum );
         memcpy(min_SPARC->Gamma[i],pSPARC->psd[i].Gamma,sizeof(double) * ppl_sum);
     }
+}
+
+void free_min_SPARC(min_SPARC_OBJ* min_SPARC)
+{
+    free(min_SPARC->localPsd);
+    free(min_SPARC->nAtomv);
+    free(min_SPARC->IP_displ);
+
+    free(min_SPARC->lmax);
+    free(min_SPARC->l_sum);
+    free(min_SPARC->ppl);
+    free(min_SPARC->Gamma);
 }
 
 void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
@@ -67,6 +81,8 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
                     x_rc[n*ndc+i] = x[n*DMnd + Atom_Influence_nloc[type].grid_pos[atom][i]];
                 }
             }
+            omp_set_num_threads(1);
+
             cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, nlocProj[type].nproj, ncol, ndc,
                 pSPARC->dV, nlocProj[type].Chi[atom], ndc, x_rc, ndc, 1.0,
                 alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj);
@@ -136,15 +152,20 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
                   NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm, double*hx)
 {
 
-    min_SPARC_OBJ *min_SPARC = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
+    min_SPARC_OBJ *min_SPARC;// = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
     interface(pSPARC, min_SPARC);
+    double t1 = MPI_Wtime();
     Vnl_mod(min_SPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, hx, MPI_COMM_WORLD);
+    double t2 = MPI_Wtime();
+
+    printf("nonlocal time: %.3f ms\n",(t2-t1)*1e3);
+
 /*
     double local_err;
     int err_count = 0;
     for (int ix = 0; ix < DMnd*ncol; ix++)
     {
-        local_err = fabs(hx[ix] - HX[ix]) / fabs(HX[ix]);
+        local_err = fabs(hx[ix] - Hx[ix]) / fabs(Hx[ix]);
         // Consider a relative error of 1e-10 to guard against floating point rounding
         if ((local_err > 1e-10) || isnan(local_err))
         {
@@ -157,7 +178,7 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
     printf("There are %d errors out of %d entries!\n", err_count, ntotal);
 */
     //Free_SPARC(pSPARC);
-    //free(min_SPARC);
+    free_min_SPARC(min_SPARC);
 
     exit(0);
 
