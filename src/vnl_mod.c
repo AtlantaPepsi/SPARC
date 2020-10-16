@@ -55,33 +55,34 @@ void free_min_SPARC(min_SPARC_OBJ* min_SPARC)
 void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
                   NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm)
 {
-    int i, n, np, count;
+    //int i, n, np, count;
 
     /* compute nonlocal operator times vector(s) */
-    int type, atom, ndc, atom_index;
-    int l, m, ldispl, lmax;
+    //int type, atom, ndc, atom_index;
+    //int l, m, ldispl, lmax;
 
-    double *alpha, *x_rc, *Vnlx;
-    alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
+    //double *alpha, *x_rc, *Vnlx;
+    double *alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
     // |pSPARC->IP_displ[pSPARC->n_atom]|  = n_atom * nproj(of each atom)
 
     /*first find inner product*/
-    for (type = 0; type < pSPARC->Ntypes; type++) {
+    for (int type = 0; type < pSPARC->Ntypes; type++) {
 
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
 
-        for (atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
-            ndc = Atom_Influence_nloc[type].ndc[atom];
+        #pragma omp parallel for
+        for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
+            int ndc = Atom_Influence_nloc[type].ndc[atom];
 
-            x_rc = (double *)malloc( ndc * ncol * sizeof(double));
+            double *x_rc = (double *)malloc( ndc * ncol * sizeof(double));
 
-            atom_index = Atom_Influence_nloc[type].atom_index[atom];
-            for (n = 0; n < ncol; n++) {
-                for (i = 0; i < ndc; i++) {
+            int atom_index = Atom_Influence_nloc[type].atom_index[atom];
+            for (int n = 0; n < ncol; n++) {
+                for (int i = 0; i < ndc; i++) {
                     x_rc[n*ndc+i] = x[n*DMnd + Atom_Influence_nloc[type].grid_pos[atom][i]];
                 }
             }
-            omp_set_num_threads(1);
+            //omp_set_num_threads(1);
 
             cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, nlocProj[type].nproj, ncol, ndc,
                 pSPARC->dV, nlocProj[type].Chi[atom], ndc, x_rc, ndc, 1.0,
@@ -99,10 +100,11 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
     }
 
     // go over all atoms and multiply gamma_Jl to the inner product
-    count = 0;
+    int count = 0;
+    int ldispl = 0;
     for (type = 0; type < pSPARC->Ntypes; type++) {
         int lloc = pSPARC->localPsd[type];
-        lmax = pSPARC->lmax[type];                                              //!
+        int lmax = pSPARC->lmax[type];                                              //!
         for (atom = 0; atom < pSPARC->nAtomv[type]; atom++) {                   //?
             for (n = 0; n < ncol; n++) {
                 ldispl = 0;
@@ -124,16 +126,18 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
     }
 
     // multiply the inner product and the nonlocal projector
-    for (type = 0; type < pSPARC->Ntypes; type++) {
+    for (int type = 0; type < pSPARC->Ntypes; type++) {
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
-        for (atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
-            ndc = Atom_Influence_nloc[type].ndc[atom];
-            atom_index = Atom_Influence_nloc[type].atom_index[atom];
-            Vnlx = (double *)malloc( ndc * ncol * sizeof(double));
+
+        #pragma omp parallel for
+        for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
+            int ndc = Atom_Influence_nloc[type].ndc[atom];
+            int atom_index = Atom_Influence_nloc[type].atom_index[atom];
+            double *Vnlx = (double *)malloc( ndc * ncol * sizeof(double));
             cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ndc, ncol, nlocProj[type].nproj, 1.0, nlocProj[type].Chi[atom], ndc,
                         alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj, 0.0, Vnlx, ndc);
-            for (n = 0; n < ncol; n++) {
-                for (i = 0; i < ndc; i++) {
+            for (int n = 0; n < ncol; n++) {
+                for (int i = 0; i < ndc; i++) {
                     Hx[n*DMnd + Atom_Influence_nloc[type].grid_pos[atom][i]] += Vnlx[n*ndc+i];
                 }
             }
