@@ -18,11 +18,13 @@ typedef struct _min_SPARC_OBJ {
 
     //from pSPARC->PSD_OBJ
     double **Gamma;
+    int *l_sum;      //size of gamma, lengths of Ntypes
     int **ppl;       // number of nonlocal projectors per l
     int *lmax;       // maximum pseudopotential component
 
 } min_SPARC_OBJ;
 
+void free_min_SPARC(min_SPARC_OBJ* min_SPARC);
 
 void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC);
 
@@ -45,5 +47,6 @@ void test_vnl(
     int ncol,
     double *x,
     double *Hx,
-    MPI_Comm comm
+    MPI_Comm comm,
+    double *hx
 );

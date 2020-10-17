@@ -698,6 +698,7 @@ void bcast_SPARC_Atom(SPARC_OBJ *pSPARC) {
             nproj = 0;
             for (l = 0; l <= lmaxv[i]; l++) {
                 nproj += pSPARC->psd[i].ppl[l];
+	    //printf("rank:%d ppl:%d\n",rank,pSPARC->psd[i].ppl[l]);
             }
             MPI_Unpack(buff, l_buff, &position, pSPARC->psd[i].RadialGrid,  sizev[i], MPI_DOUBLE, MPI_COMM_WORLD);
             MPI_Unpack(buff, l_buff, &position, pSPARC->psd[i].UdV,  nproj*sizev[i], MPI_DOUBLE, MPI_COMM_WORLD);
