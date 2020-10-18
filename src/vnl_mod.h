@@ -20,6 +20,7 @@ typedef struct _min_SPARC_OBJ {
     double **Gamma;
     int **ppl;       // number of nonlocal projectors per l
     int *lmax;       // maximum pseudopotential component
+    int *partial_sum;       // maximum pseudopotential component
 
 } min_SPARC_OBJ;
 

@@ -20,6 +20,7 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
 
 
     min_SPARC->lmax = (int *) malloc( pSPARC->Ntypes * sizeof(int) );
+    min_SPARC->partial_sum = (int *) malloc( pSPARC->Ntypes * sizeof(int) );
     min_SPARC->ppl = (int **)malloc( sizeof(int*) * pSPARC->Ntypes );
     min_SPARC->Gamma = (double **)malloc( sizeof(double*) * pSPARC->Ntypes );
 
@@ -32,6 +33,7 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
         {
             (min_SPARC->ppl[i])[j] = pSPARC->psd[i].ppl[j];
             ppl_sum += pSPARC->psd[i].ppl[j];
+	    min_SPARC->partial_sum[j] = ppl_sum;
         }
 
         min_SPARC->Gamma[i] = (double*) malloc( sizeof(double) * ppl_sum );
@@ -51,7 +53,7 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
     double *alpha, *x_rc, *Vnlx;
     alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
     // |pSPARC->IP_displ[pSPARC->n_atom]|  = n_atom * nproj(of each atom)
-
+	printf("nthreads: %d\n",omp_get_max_threads());
     /*first find inner product*/
     for (int type = 0; type < pSPARC->Ntypes; type++) {
 
@@ -85,12 +87,14 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
     }
 
     // go over all atoms and multiply gamma_Jl to the inner product
-    int count = 0;
+    int natom = 0;
     for (int type = 0; type < pSPARC->Ntypes; type++) {
         int lloc = pSPARC->localPsd[type];
         int lmax = pSPARC->lmax[type];                                              //!
         for (int atom = 0; atom < pSPARC->nAtomv[type]; atom++) {                   //?
-            for (int n = 0; n < ncol; n++) {
+            int count = 0;
+            int start_index = pSPARC->IP_displ[natom];
+	    for (int n = 0; n < ncol; n++) {
                 int ldispl = 0;
                 for (int l = 0; l <= lmax; l++) {
                     // skip the local l
@@ -100,13 +104,14 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
                     }
                     for (int np = 0; np < (pSPARC->ppl[type])[l]; np++) {
                         for (int m = -l; m <= l; m++) {
-                            alpha[count++] *= (pSPARC->Gamma[type])[ldispl+np];//!
+                            alpha[count+start_index] *= (pSPARC->Gamma[type])[ldispl+np];//!
                         }
                     }
                     ldispl += (pSPARC->ppl[type])[l];
                 }
             }
         }
+	natom += pSPARC->nAtomv[type];
     }
 
     // multiply the inner product and the nonlocal projector
