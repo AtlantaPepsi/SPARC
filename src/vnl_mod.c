@@ -48,7 +48,7 @@ void free_min_SPARC(min_SPARC_OBJ* min_SPARC)
     free(min_SPARC->IP_displ);
 
     free(min_SPARC->lmax);
-    free(min_SPARC->l_sum);
+    free(min_SPARC->partial_sum);
     for (int i = 0; i < min_SPARC->Ntypes; i++) 
     {
  	free(min_SPARC->ppl[i]);
@@ -135,7 +135,7 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
         }
 	natom += pSPARC->nAtomv[type];
     }
-    printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
+    //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
 
 
 
@@ -189,20 +189,20 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
     int err_count = 0;
     for (int ix = 0; ix < DMnd*ncol; ix++)
     {
-        local_err = fabs(hx[ix] - HX[ix]) / fabs(HX[ix]);
+        local_err = fabs(hx[ix] - Hx[ix]) / fabs(Hx[ix]);
         // Consider a relative error of 1e-10 to guard against floating point rounding
         if ((local_err > 1e-10) || isnan(local_err))
         {
-            printf("At index %d: %.15f vs. %.15f\n", ix, fabs(psi_new[ix]), fabs(psi_chk[ix]));
+            //printf("At index %d: %.15f vs. %.15f\n", ix, fabs(psi_new[ix]), fabs(psi_chk[ix]));
             err_count = err_count + 1;
         }
     }
 
 
-    printf("There are %d errors out of %d entries!\n", err_count, ntotal);
+    printf("There are %d errors out of %d entries!\n", err_count, ncol*DMnd);
 
     //Free_SPARC(pSPARC);
-    //free(min_SPARC);
+    free_min_SPARC(min_SPARC);
 
     exit(0);
 
