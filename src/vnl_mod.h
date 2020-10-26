@@ -27,6 +27,8 @@ typedef struct _min_SPARC_OBJ {
 
 void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC);
 
+void free_min_SPARC(min_SPARC_OBJ* min_SPARC);
+
 void Vnl_mod(
     const min_SPARC_OBJ *pSPARC,
     const int DMnd,
