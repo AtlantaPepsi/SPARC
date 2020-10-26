@@ -41,8 +41,8 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
     }
 }
 
-void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
-                  NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm)
+void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
+                  const NLOC_PROJ_OBJ *nlocProj, const int ncol, double *x, double *Hx, MPI_Comm comm)
 {
     //int i, n, np, count;
 
@@ -50,22 +50,28 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
     //int type, atom, ndc, atom_index;
     //int l, m, ldispl, lmax;
 
-    double *alpha, *x_rc, *Vnlx;
+    double *alpha;//, *x_rc, *Vnlx;
     alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
     // |pSPARC->IP_displ[pSPARC->n_atom]|  = n_atom * nproj(of each atom)
 	printf("nthreads: %d\n",omp_get_max_threads());
+	printf("atomatom: %d\n",Atom_Influence_nloc[0].n_atom);
+	printf("spacatom: %d\n",pSPARC->n_atom);
+	printf("atomtype: %d\n",pSPARC->Ntypes);
     /*first find inner product*/
+    double Start = MPI_Wtime();
+    //#pragma omp parallel for collapse(2)
     for (int type = 0; type < pSPARC->Ntypes; type++) {
 
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
 	
-	#pragma omp parallel for
+	//`#pragma omp parallel for
         for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
             int ndc = Atom_Influence_nloc[type].ndc[atom];
-
-            x_rc = (double *)malloc( ndc * ncol * sizeof(double));
-
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
+	    //int tid = omp_get_thread_num();
+	    //printf("id: %d\n",tid);
+            double *x_rc = (double *)malloc( ndc * ncol * sizeof(double));
+
             for (int n = 0; n < ncol; n++) {
                 for (int i = 0; i < ndc; i++) {
                     x_rc[n*ndc+i] = x[n*DMnd + Atom_Influence_nloc[type].grid_pos[atom][i]];
@@ -73,11 +79,13 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
             }
             cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, nlocProj[type].nproj, ncol, ndc,
                 pSPARC->dV, nlocProj[type].Chi[atom], ndc, x_rc, ndc, 1.0,
-                alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj);
+	     	alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj);
 
             free(x_rc);
         }
     }
+    printf("1st total: %f\n",(MPI_Wtime()-Start)*1e3);
+
 
     // if there are domain parallelization over each band, we need to sum over all processes over domain comm
     int commsize;
@@ -86,13 +94,19 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
         MPI_Allreduce(MPI_IN_PLACE, alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol, MPI_DOUBLE, MPI_SUM, comm);
     }
 
+
+
     // go over all atoms and multiply gamma_Jl to the inner product
     int natom = 0;
+    Start = MPI_Wtime();
     for (int type = 0; type < pSPARC->Ntypes; type++) {
         int lloc = pSPARC->localPsd[type];
         int lmax = pSPARC->lmax[type];                                              //!
+    //double Start = MPI_Wtime();
+	//#pragma omp parallel for
         for (int atom = 0; atom < pSPARC->nAtomv[type]; atom++) {                   //?
-            int count = 0;
+            //double start = omp_get_wtime();
+	    int count = 0;
             int start_index = pSPARC->IP_displ[natom];
 	    for (int n = 0; n < ncol; n++) {
                 int ldispl = 0;
@@ -110,17 +124,27 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
                     ldispl += (pSPARC->ppl[type])[l];
                 }
             }
+	    //printf("thread:%d  time:%f\n",omp_get_thread_num(), (omp_get_wtime()-start)*1e3);
         }
+    //printf("total: %f\n",(MPI_Wtime()-Start)*1e3);
 	natom += pSPARC->nAtomv[type];
     }
+    printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
+
+
+
+
+
 
     // multiply the inner product and the nonlocal projector
+    Start = MPI_Wtime();
     for (int type = 0; type < pSPARC->Ntypes; type++) {
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
+	#pragma omp parallel for
         for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
             int ndc = Atom_Influence_nloc[type].ndc[atom];
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
-            Vnlx = (double *)malloc( ndc * ncol * sizeof(double));
+            double *Vnlx = (double *)malloc( ndc * ncol * sizeof(double));
             cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ndc, ncol, nlocProj[type].nproj, 1.0, nlocProj[type].Chi[atom], ndc,
                         alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj, 0.0, Vnlx, ndc);
             for (int n = 0; n < ncol; n++) {
@@ -131,6 +155,9 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Ato
             free(Vnlx);
         }
     }
+    printf("3rd total: %f\n",(MPI_Wtime()-Start)*1e3);
+    
+    
     free(alpha);
 }
 

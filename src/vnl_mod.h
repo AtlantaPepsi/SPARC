@@ -29,10 +29,10 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC);
 
 void Vnl_mod(
     const min_SPARC_OBJ *pSPARC,
-    int DMnd,
-    ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
-    NLOC_PROJ_OBJ *nlocProj,
-    int ncol,
+    const int DMnd,
+    const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
+    const NLOC_PROJ_OBJ *nlocProj,
+    const int ncol,
     double *x,
     double *Hx,
     MPI_Comm comm

@@ -1,0 +1,104 @@
+***************************************************************************
+*                       SPARC (version Oct 01, 2020)                      *
+*   Copyright (c) 2020 Material Physics & Mechanics Group, Georgia Tech   *
+*           Distributed under GNU General Public License 3 (GPL)          *
+*                   Start time: Tue Oct 20 23:35:08 2020                  *
+***************************************************************************
+                           Input parameters                                
+***************************************************************************
+CELL: 15.4 15.4 15.4 
+LATVEC:
+1 0 0 
+0 1 0 
+0 0 1 
+FD_GRID: 35 35 35
+FD_ORDER: 12
+BC: P P P
+KPOINT_GRID: 1 1 1
+KPOINT_SHIFT: 0 0 0
+SPIN_TYP: 0
+ELEC_TEMP_TYPE: Fermi-Dirac
+ELEC_TEMP: 315.775131
+CHEB_DEGREE: 25
+NSTATES: 40
+#WARNING: Number of bands may be insufficient for efficient SCF convergence.
+EXCHANGE_CORRELATION: LDA_PW
+CALC_STRESS: 0
+CALC_PRES: 0
+TWTIME: 1E+09
+MD_FLAG: 1
+MD_METHOD: NVK_G
+MD_TIMESTEP: 1
+MD_NSTEP: 100
+ION_VEL_DSTR: 2
+ION_VEL_DSTR_RAND: 0
+ION_TEMP: 315.775131
+QMASS: 1653.65493345972
+CHEFSI_BOUND_FLAG: 0
+MAXIT_SCF: 100
+MINIT_SCF: 3
+MAXIT_POISSON: 3000
+TOL_SCF: 1.00E-04
+POISSON_SOLVER: AAR
+TOL_POISSON: 1.00E-06
+TOL_LANCZOS: 1.00E-02
+TOL_PSEUDOCHARGE: 1.00E-06
+MIXING_VARIABLE: potential
+MIXING_PRECOND: kerker
+TOL_PRECOND: 1.94E-04
+PRECOND_KERKER_KTF: 1
+PRECOND_KERKER_THRESH: 0.1
+MIXING_PARAMETER: 0.3
+MIXING_PARAMETER_SIMPLE: 0.3
+MIXING_HISTORY: 7
+PULAY_FREQUENCY: 2
+PULAY_RESTART: 0
+REFERENCE_CUTOFF: 0.5
+RHO_TRIGGER: 4
+FIX_RAND: 0
+VERBOSITY: 1
+PRINT_FORCES: 0
+PRINT_ATOMS: 1
+PRINT_EIGEN: 0
+PRINT_DENSITY: 0
+PRINT_MDOUT: 1
+PRINT_VELS: 1
+PRINT_RESTART: 1
+PRINT_RESTART_FQ: 20
+OUTPUT_FILE: LiH64
+***************************************************************************
+                           Parallelization                                 
+***************************************************************************
+NP_SPIN_PARAL: 1
+NP_KPOINT_PARAL: 1
+NP_BAND_PARAL: 1
+NP_DOMAIN_PARAL: 1 1 1
+NP_DOMAIN_PHI_PARAL: 1 1 1
+EIG_SERIAL_MAXNS: 2000
+***************************************************************************
+                             Initialization                                
+***************************************************************************
+Number of processors               :  1
+Mesh spacing                       :  0.44 (Bohr)
+Number of symmetry adapted k-points:  1
+Output printed to                  :  LiH64.out_11
+MD output printed to               :  LiH64.aimd_11
+Total number of atom types         :  2
+Total number of atoms              :  64
+Total number of electrons          :  64
+Atom type 1  (valence electrons)   :  Li 1
+Pseudopotential                    :  psd_TM_Li.psp
+Atomic mass                        :  6.941
+Pseudocharge radii of atom type 1  :  5.28 5.28 5.28 (x, y, z dir)
+Number of atoms of type 1          :  32
+Atom type 2  (valence electrons)   :  H 1
+Pseudopotential                    :  psd_TM_H.psp
+Atomic mass                        :  1.00794
+Pseudocharge radii of atom type 2  :  4.40 4.40 4.40 (x, y, z dir)
+Number of atoms of type 2          :  32
+Estimated total memory usage       :  87.67 MB
+Estimated memory per processor     :  87.67 MB
+===================================================================
+                    Self Consistent Field (SCF#1)                     
+===================================================================
+Iteration     Free Energy (Ha/atom)   SCF Error        Timing (sec)
