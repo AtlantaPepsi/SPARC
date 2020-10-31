@@ -63,6 +63,27 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
     fclose(psprk);*/
 }
 
+
+void free_min_SPARC(min_SPARC_OBJ* min_SPARC)
+{
+    free(min_SPARC->localPsd);
+    free(min_SPARC->nAtomv);
+    free(min_SPARC->IP_displ);
+
+    free(min_SPARC->lmax);
+    free(min_SPARC->partial_sum);
+    for (int i = 0; i < min_SPARC->Ntypes; i++) 
+    {
+ 	free(min_SPARC->ppl[i]);
+	free(min_SPARC->Gamma[i]);
+    }
+    free(min_SPARC->ppl);
+    free(min_SPARC->Gamma);
+	
+    free(min_SPARC);
+}
+
+
 void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
                   const NLOC_PROJ_OBJ *nlocProj, const int ncol, double *x, double *Hx, MPI_Comm comm)
 {
