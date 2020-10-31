@@ -139,7 +139,7 @@ for (int i = 0; i < pSPARC->Ntypes;i++) {
     /* compute nonlocal operator times vector(s) */
     //int type, atom, ndc, atom_index;
     //int l, m, ldispl, lmax;
-printf("look look\n");
+//printf("look look\n");
 static double t1=0;
 static double t2=0;
 static double t3=0;
@@ -289,9 +289,9 @@ static double tc=0;
     
     free(alpha);
 //}
-printf("1st total: %f\n",t1);
-printf("2nd total: %f\n",t2);
-printf("3rd total: %f\n",t3);
+//printf("1st total: %f\n",t1);
+//printf("2nd total: %f\n",t2);
+//printf("3rd total: %f\n",t3);
 }
 
 
@@ -306,7 +306,7 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
     HX = fopen("HX.bin","w");
     fwrite(Hx, sizeof(double), ncol*DMnd, HX);
     fclose(HX);*/
-
+    //static int r = 0;
     min_SPARC_OBJ *min_SPARC = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
     interface(pSPARC, min_SPARC);
     double t1 = MPI_Wtime();
@@ -314,12 +314,12 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
     double t2 = MPI_Wtime();
     double final = (t2-t1)*1e3;
     //printf("total time :%f\n", final);
-/*
+
     double local_err;
     int err_count = 0;
     for (int ix = 0; ix < DMnd*ncol; ix++)
     {
-        local_err = fabs(hx[ix] - HX[ix]) / fabs(HX[ix]);
+        local_err = fabs(hx[ix] - Hx[ix]) / fabs(Hx[ix]);
         // Consider a relative error of 1e-10 to guard against floating point rounding
         if ((local_err > 1e-10) || isnan(local_err))
         {
@@ -327,14 +327,14 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
             err_count = err_count + 1;
         }
     }
+	//if(err_count>0){
 
-
-    printf("There are %d errors out of %d entries!\n", err_count, ntotal);
-*/
+    printf("There are %d errors out of %d entries\n", err_count, ncol*DMnd);
+//exit(0);}
     free_min_SPARC(min_SPARC);
+//    r++;
     //free(min_SPARC);
-
-//    exit(0);
+    exit(0);
 
 
 }

@@ -687,14 +687,13 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
                   NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm)
 {
     double *hx;
-//    hx = (double *)malloc(DMnd * ncol * sizeof(double));
-//    memcpy(hx, Hx, DMnd * ncol * sizeof(double));
+    hx = (double *)malloc(DMnd * ncol * sizeof(double));
+    memcpy(hx, Hx, DMnd * ncol * sizeof(double));
 
-    //alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
 
     int i, n, np, count;
     /* compute nonlocal operator times vector(s) */
-/*    int ityp, iat, l, m, ldispl, lmax, ndc, atom_index;
+    int ityp, iat, l, m, ldispl, lmax, ndc, atom_index;
     double *alpha, *x_rc, *Vnlx;
     alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
     //first find inner product
@@ -767,10 +766,10 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
             free(Vnlx);
         }
     }
-*/
-    test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm, Hx);
-    //free(alpha);
-    printf("done!\n");
+
+    test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm, hx);
+    free(alpha);
+    //printf("done!\n");
     //exit(0);
 }
 
