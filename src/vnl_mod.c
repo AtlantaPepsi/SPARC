@@ -9,7 +9,7 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
     min_SPARC->n_atom = pSPARC->n_atom;
     min_SPARC->dV = pSPARC->dV;
     min_SPARC->Ntypes = pSPARC->Ntypes;
-
+//int* ugh = (int*)malloc(pSPARC->Ntypes*sizeof(int));
     min_SPARC->localPsd = (int *)malloc( pSPARC->Ntypes * sizeof(int) );
     min_SPARC->nAtomv   = (int *)malloc( pSPARC->Ntypes * sizeof(int) );
     min_SPARC->IP_displ = (int *)malloc( sizeof(int) * (pSPARC->n_atom+1));
@@ -35,36 +35,141 @@ void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC)
             ppl_sum += pSPARC->psd[i].ppl[j];
 	    min_SPARC->partial_sum[j] = ppl_sum;
         }
-
+//ugh[i]=ppl_sum;
         min_SPARC->Gamma[i] = (double*) malloc( sizeof(double) * ppl_sum );
         memcpy(min_SPARC->Gamma[i],pSPARC->psd[i].Gamma,sizeof(double) * ppl_sum);
     }
+
+/*
+    FILE *psprk;
+    psprk = fopen("pSPARC.bin","w");
+    fwrite(pSPARC, sizeof(SPARC_OBJ), 1, psprk);
+    fwrite(&(min_SPARC->n_atom), sizeof(int), 1, psprk);
+    fwrite(&(min_SPARC->Ntypes), sizeof(int), 1, psprk);
+    fwrite(&(min_SPARC->dV), sizeof(double), 1, psprk);
+    fwrite(min_SPARC->localPsd, sizeof(int), min_SPARC->Ntypes, psprk);
+    fwrite(min_SPARC->nAtomv, sizeof(int), min_SPARC->Ntypes, psprk);
+    fwrite(min_SPARC->IP_displ, sizeof(int), min_SPARC->n_atom+1, psprk);
+    fwrite(min_SPARC->lmax, sizeof(int), min_SPARC->Ntypes, psprk);
+    fwrite(min_SPARC->partial_sum, sizeof(int), min_SPARC->Ntypes, psprk);
+
+    for (int i = 0; i < pSPARC->Ntypes; i++) {
+	fwrite((min_SPARC->ppl)[i], sizeof(int), (min_SPARC->lmax)[i]+1, psprk);
+	fwrite((min_SPARC->Gamma)[i], sizeof(double), ugh[i], psprk);
+    }
+    free(ugh);
+
+
+    fclose(psprk);*/
 }
 
 void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
                   const NLOC_PROJ_OBJ *nlocProj, const int ncol, double *x, double *Hx, MPI_Comm comm)
 {
     //int i, n, np, count;
+    /*FILE *atm_inf, *proj, *hx, *X, *others;
+    atm_inf = fopen("atm_inf.bin","w");
+    proj = fopen("proj.bin","w");
+    hx = fopen("hx.bin","w");
+    X = fopen("X.bin","w");
+    others = fopen("others.bin","w");
+
+    
+    fwrite(&ncol, sizeof(int), 1, others);
+    fwrite(&DMnd, sizeof(int), 1, others);
+    fwrite(&(pSPARC->Ntypes), sizeof(int), 1, others);
+
+
+for (int i = 0; i < pSPARC->Ntypes;i++) {
+    fwrite(&(Atom_Influence_nloc[i].n_atom), sizeof(int), 1, atm_inf);
+    fwrite(Atom_Influence_nloc[i].coords, sizeof(double), (Atom_Influence_nloc[i].n_atom)*3, atm_inf);
+//    fwrite(Atom_Influence_nloc[i].atom_spin, sizeof(double), Atom_Influence_nloc[i].n_atom, atm_inf);
+    fwrite(Atom_Influence_nloc[i].atom_index, sizeof(int), Atom_Influence_nloc[i].n_atom, atm_inf);
+    fwrite(Atom_Influence_nloc[i].xs, sizeof(int), Atom_Influence_nloc[i].n_atom, atm_inf);
+    fwrite(Atom_Influence_nloc[i].xe, sizeof(int), Atom_Influence_nloc[i].n_atom, atm_inf);
+    fwrite(Atom_Influence_nloc[i].ys, sizeof(int), Atom_Influence_nloc[i].n_atom, atm_inf);
+    fwrite(Atom_Influence_nloc[i].ye, sizeof(int), Atom_Influence_nloc[i].n_atom, atm_inf);
+    fwrite(Atom_Influence_nloc[i].zs, sizeof(int), Atom_Influence_nloc[i].n_atom, atm_inf);
+    fwrite(Atom_Influence_nloc[i].ze, sizeof(int), Atom_Influence_nloc[i].n_atom, atm_inf);
+    fwrite(Atom_Influence_nloc[i].ndc, sizeof(int), Atom_Influence_nloc[i].n_atom, atm_inf);
+    for (int j = 0; j < Atom_Influence_nloc[i].n_atom; j++)
+    {
+	fwrite((Atom_Influence_nloc[i].grid_pos)[j], sizeof(int), (Atom_Influence_nloc[i].ndc)[j], atm_inf);
+    }
+
+
+    fwrite(&(nlocProj[i].nproj), sizeof(int), 1, proj);
+    for (int j = 0; j < Atom_Influence_nloc[i].n_atom; j++)
+    {
+	fwrite(nlocProj[i].Chi[j], sizeof(double), nlocProj[i].nproj * Atom_Influence_nloc[i].ndc[j], proj);    
+	//fwrite(nlocProj[i].Chi_c[j], sizeof(double), nlocProj[i].nproj * Atom_Influence_nloc[i].ndc[j], proj);
+    }
+}
+    fwrite(Hx, sizeof(double), ncol*DMnd, hx);
+    fwrite(x, sizeof(double), ncol*DMnd, X);
+
+
+    fclose(atm_inf);
+    fclose(proj);
+    fclose(hx);
+    fclose(X);
+    fclose(others);*/
 
     /* compute nonlocal operator times vector(s) */
     //int type, atom, ndc, atom_index;
     //int l, m, ldispl, lmax;
-
+printf("look look\n");
+static double t1=0;
+static double t2=0;
+static double t3=0;
+static double tc=0;
+//for (int kk = 0; kk < 15; kk++) {
     double *alpha;//, *x_rc, *Vnlx;
     alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
     // |pSPARC->IP_displ[pSPARC->n_atom]|  = n_atom * nproj(of each atom)
-	printf("nthreads: %d\n",omp_get_max_threads());
-	printf("atomatom: %d\n",Atom_Influence_nloc[0].n_atom);
-	printf("spacatom: %d\n",pSPARC->n_atom);
-	printf("atomtype: %d\n",pSPARC->Ntypes);
+//	printf("nthreads: %d\n",omp_get_max_threads());
+//	printf("atomatom: %d\n",Atom_Influence_nloc[0].n_atom);
+//	printf("spacatom: %d\n",pSPARC->n_atom);
+//	printf("atomtype: %d\n",pSPARC->Ntypes);
     /*first find inner product*/
+    
     double Start = MPI_Wtime();
+/*    
+    for (int type = 0; type < pSPARC->Ntypes; type++) {
+        if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
+	#pragma omp parallel for
+        for (int atom = 0; atom < 30; atom++) {
+            int ndc = Atom_Influence_nloc[type].ndc[atom];
+            int atom_index = Atom_Influence_nloc[type].atom_index[atom];
+  //          int b;
+	    double *Vnlx = (double *)malloc( ndc * ncol * sizeof(double));
+            cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ndc, ncol, nlocProj[type].nproj, 1.0, nlocProj[type].Chi[atom], ndc,
+           	    alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj, 0.0, Vnlx, ndc);
+            for (int n = 0; n < ncol; n++) {
+                for (int i = 0; i < ndc; i++) {
+                   Hx[n*DMnd + Atom_Influence_nloc[type].grid_pos[atom][i]] += Vnlx[n*ndc+i];
+                }
+            }
+            free(Vnlx);
+        }
+    }
+    printf("3rd total: %f\n",(MPI_Wtime()-Start)*1e3);
+    */
+/*
+#pragma omp parallel
+{
+
+}*/
+
+    //printf("3rd total: %f\n",(MPI_Wtime()-Start)*1e3);
+
+    //Start = MPI_Wtime();
     //#pragma omp parallel for collapse(2)
     for (int type = 0; type < pSPARC->Ntypes; type++) {
 
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
 	
-	//`#pragma omp parallel for
+	#pragma omp parallel for
         for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
             int ndc = Atom_Influence_nloc[type].ndc[atom];
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
@@ -84,10 +189,11 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
             free(x_rc);
         }
     }
-    printf("1st total: %f\n",(MPI_Wtime()-Start)*1e3);
-
+    //printf("1st total: %f\n",(MPI_Wtime()-Start)*1e3);
+    t1+=(MPI_Wtime()-Start)*1e3;
 
     // if there are domain parallelization over each band, we need to sum over all processes over domain comm
+
     int commsize;
     MPI_Comm_size(comm, &commsize);
     if (commsize > 1) {
@@ -129,7 +235,8 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
     //printf("total: %f\n",(MPI_Wtime()-Start)*1e3);
 	natom += pSPARC->nAtomv[type];
     }
-    printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
+    //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
+    t2+=(MPI_Wtime()-Start)*1e3;
 
 
 
@@ -155,10 +262,15 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
             free(Vnlx);
         }
     }
-    printf("3rd total: %f\n",(MPI_Wtime()-Start)*1e3);
+    //printf("3rd total: %f\n",(MPI_Wtime()-Start)*1e3);
+    t3+=(MPI_Wtime()-Start)*1e3;
     
     
     free(alpha);
+//}
+printf("1st total: %f\n",t1);
+printf("2nd total: %f\n",t2);
+printf("3rd total: %f\n",t3);
 }
 
 
@@ -169,6 +281,10 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
 void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
                   NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm, double*hx)
 {
+    /*FILE *HX;
+    HX = fopen("HX.bin","w");
+    fwrite(Hx, sizeof(double), ncol*DMnd, HX);
+    fclose(HX);*/
 
     min_SPARC_OBJ *min_SPARC = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
     interface(pSPARC, min_SPARC);
@@ -176,7 +292,7 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
     Vnl_mod(min_SPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, hx, MPI_COMM_WORLD);
     double t2 = MPI_Wtime();
     double final = (t2-t1)*1e3;
-    printf("total time :%f\n", final);
+    //printf("total time :%f\n", final);
 /*
     double local_err;
     int err_count = 0;
@@ -194,10 +310,10 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
 
     printf("There are %d errors out of %d entries!\n", err_count, ntotal);
 */
-    //Free_SPARC(pSPARC);
+    free_min_SPARC(min_SPARC);
     //free(min_SPARC);
 
-    exit(0);
+//    exit(0);
 
 
 }
