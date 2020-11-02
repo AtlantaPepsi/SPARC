@@ -76,7 +76,7 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
 
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
 	
-	#pragma omp parallel for
+	//#pragma omp parallel for
         for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
             int ndc = Atom_Influence_nloc[type].ndc[atom];
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
@@ -105,7 +105,7 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
     }
 
 
-
+/*
     // go over all atoms and multiply gamma_Jl to the inner product
     int natom = 0;
     //Start = MPI_Wtime();
@@ -136,6 +136,31 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
 	natom += pSPARC->nAtomv[type];
     }
     //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
+*/
+   
+    int count = 0;
+    for (int ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
+        int lloc = pSPARC->localPsd[ityp];
+        int lmax = pSPARC->lmax[ityp];
+        for (int iat = 0; iat < pSPARC->nAtomv[ityp]; iat++) {
+            for (int n = 0; n < ncol; n++) {
+                int ldispl = 0;
+                for (int l = 0; l <= lmax; l++) {
+                    // skip the local l
+                    if (l == lloc) {
+                        ldispl += (pSPARC->ppl[ityp])[l];
+                        continue;
+                    }
+                    for (int np = 0; np < (pSPARC->ppl[ityp])[l]; np++) {
+                        for (int m = -l; m <= l; m++) {
+                            alpha[count++] *= (pSPARC->Gamma[ityp])[ldispl+np];
+                        }
+                    }
+                    ldispl += (pSPARC->ppl[ityp])[l];
+                }
+            }
+        }
+    }
 
 
 
@@ -147,7 +172,7 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
     for (int type = 0; type < pSPARC->Ntypes; type++) {
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
 	    
-	#pragma omp parallel for
+	//#pragma omp parallel for
         for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
             int ndc = Atom_Influence_nloc[type].ndc[atom];
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
