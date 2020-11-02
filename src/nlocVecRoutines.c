@@ -767,7 +767,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
         }
     }
 
-    test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm, hx);
+//    test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm, hx);
     free(alpha);
     //printf("done!\n");
     //exit(0);
