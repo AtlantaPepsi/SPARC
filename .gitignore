@@ -1,5 +1,8 @@
 *.udb
 *.o
+*.static*
+*.out*
+*.restart*
 .DS_Store
 sparc-EVA
 sparc

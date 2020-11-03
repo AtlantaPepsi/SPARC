@@ -208,7 +208,7 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
     Vnl_mod(min_SPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, hx, MPI_COMM_WORLD);
     double t2 = MPI_Wtime();
     double final = (t2-t1)*1e3;
-    printf("total time :%f\n", final);
+    //printf("total time :%f\n", final);
 
     double local_err;
     int err_count = 0;
@@ -223,13 +223,15 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
         }
     }
 
+    if (err_count !=0 ) {
 
-    printf("There are %d errors out of %d entries!\n", err_count, ncol*DMnd);
-
+	printf("There are %d errors out of %d entries!\n", err_count, ncol*DMnd);
+	exit(0);
+    }
     //Free_SPARC(pSPARC);
     free_min_SPARC(min_SPARC);
 
-    exit(0);
+    //exit(0);
 
 
 }
