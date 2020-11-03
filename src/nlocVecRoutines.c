@@ -717,6 +717,10 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
         }
     }
 
+	printf("Alpha1:%f\n",alpha[0]);
+    double *zeta = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
+
+    memcpy(zeta, alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol* sizeof(double));
     // if there are domain parallelization over each band, we need to sum over all processes over domain comm
     int commsize;
     MPI_Comm_size(comm, &commsize);
@@ -724,6 +728,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
         MPI_Allreduce(MPI_IN_PLACE, alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol, MPI_DOUBLE, MPI_SUM, comm);
     }
 
+	printf("Alpha2:%f\n",alpha[0]);
     // go over all atoms and multiply gamma_Jl to the inner product
     count = 0;
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
@@ -767,8 +772,9 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
         }
     }
 
-//    test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm, hx);
+   test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm, hx,alpha, zeta);
     free(alpha);
+free(hx);
     //printf("done!\n");
     //exit(0);
 }

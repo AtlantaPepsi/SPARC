@@ -2,6 +2,8 @@
 *.o
 *.out*
 *.static*
+*.aim*
+*.restar*
 .DS_Store
 sparc-EVA
 sparc

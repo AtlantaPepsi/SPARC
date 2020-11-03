@@ -37,7 +37,9 @@ void Vnl_mod(
     const int ncol,
     double *x,
     double *Hx,
-    MPI_Comm comm
+    MPI_Comm comm,
+double *beta,
+double *zeta
 );
 
 void test_vnl(
@@ -49,5 +51,7 @@ void test_vnl(
     double *x,
     double *Hx,
     MPI_Comm comm,
-    double *hx
+    double *hx,
+double *alpha,
+double *zeta
 );

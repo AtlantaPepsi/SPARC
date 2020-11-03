@@ -85,7 +85,7 @@ void free_min_SPARC(min_SPARC_OBJ* min_SPARC)
 
 
 void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
-                  const NLOC_PROJ_OBJ *nlocProj, const int ncol, double *x, double *Hx, MPI_Comm comm)
+                  const NLOC_PROJ_OBJ *nlocProj, const int ncol, double *x, double *Hx, MPI_Comm comm,double *beta, double *zeta)
 {
     //int i, n, np, count;
     /*FILE *atm_inf, *proj, *hx, *X, *others;
@@ -143,7 +143,7 @@ for (int i = 0; i < pSPARC->Ntypes;i++) {
 static double t1=0;
 static double t2=0;
 static double t3=0;
-static double tc=0;
+static int tc=0;
 //for (int kk = 0; kk < 15; kk++) {
     double *alpha;//, *x_rc, *Vnlx;
     alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
@@ -208,8 +208,27 @@ static double tc=0;
 	     	alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj);
 
             free(x_rc);
+	}
+        
+    }
+    /*double local_err;
+    int err_count = 0;
+    for (int ix = 0; ix < pSPARC->IP_displ[pSPARC->n_atom] * ncol; ix++)
+    {
+        local_err = fabs(alpha[ix] - zeta[ix]) / fabs(zeta[ix]);
+        // Consider a relative error of 1e-10 to guard against floating point rounding
+        if ((local_err > 1e-10) || isnan(local_err))
+        {
+            // printf("At index %d: %.15f vs. %.15f\n", ix, fabs(psi_new[ix]), fabs(psi_chk[ix]));
+            err_count = err_count + 1;
         }
     }
+	if(err_count>0){
+
+    printf("There are %d errors out of %d entries zeta%d\n", err_count, pSPARC->IP_displ[pSPARC->n_atom] * ncol,tc);
+exit(0);}*/
+	printf("alpha1:%f\n",alpha[0]);
+    
     //printf("1st total: %f\n",(MPI_Wtime()-Start)*1e3);
 				//    t1+=(MPI_Wtime()-Start)*1e3;
 
@@ -220,6 +239,26 @@ static double tc=0;
     if (commsize > 1) {
         MPI_Allreduce(MPI_IN_PLACE, alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol, MPI_DOUBLE, MPI_SUM, comm);
     }
+
+	printf("alpha2:%f\n",alpha[0]);
+
+    /*
+    err_count = 0;
+    for (int ix = 0; ix < pSPARC->IP_displ[pSPARC->n_atom] * ncol; ix++)
+    {
+        local_err = fabs(alpha[ix] - beta[ix]) / fabs(beta[ix]);
+        // Consider a relative error of 1e-10 to guard against floating point rounding
+        if ((local_err > 1e-10) || isnan(local_err))
+        {
+            // printf("At index %d: %.15f vs. %.15f\n", ix, fabs(psi_new[ix]), fabs(psi_chk[ix]));
+            err_count = err_count + 1;
+        }
+    }
+	if(err_count>0){
+	printf("alpha:%f actual:%f original:%f\n",alpha[0],beta[0],zeta[0]);
+    printf("There are %d errors out of %d entries beta%d\n", err_count, pSPARC->IP_displ[pSPARC->n_atom] * ncol,tc);
+exit(0);}
+tc++;*/
 
 
 
@@ -327,21 +366,21 @@ static double tc=0;
 
 
 void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
-                  NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm, double*hx)
+                  NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm, double*hx,double *alpha, double *zeta)
 {
     /*FILE *HX;
     HX = fopen("HX.bin","w");
     fwrite(Hx, sizeof(double), ncol*DMnd, HX);
     fclose(HX);*/
-    //static int r = 0;
+    static int r = 0;
     min_SPARC_OBJ *min_SPARC = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
     interface(pSPARC, min_SPARC);
     double t1 = MPI_Wtime();
-    Vnl_mod(min_SPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, hx, MPI_COMM_WORLD);
+    Vnl_mod(min_SPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, hx, MPI_COMM_WORLD,alpha,zeta);
     double t2 = MPI_Wtime();
     double final = (t2-t1)*1e3;
     //printf("total time :%f\n", final);
-/*
+
     double local_err;
     int err_count = 0;
     for (int ix = 0; ix < DMnd*ncol; ix++)
@@ -354,12 +393,12 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
             err_count = err_count + 1;
         }
     }
-	//if(err_count>0){
+	if(err_count>0){
 
-    printf("There are %d errors out of %d entries\n", err_count, ncol*DMnd);*/
-//exit(0);}
+    printf("There are %d errors out of %d entries, %d\n", err_count, ncol*DMnd,r);
+exit(0);}
     free_min_SPARC(min_SPARC);
-//    r++;
+    r++;
     //free(min_SPARC);
 //    exit(0);
 
