@@ -201,11 +201,13 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
 void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
                   NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm, double*hx)
 {
-
+    int commsize;
+    MPI_Comm_size(comm, &commsize);
+    //printf("vnl: %p, size: %d\n",comm,commsize);
     min_SPARC_OBJ *min_SPARC = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
     interface(pSPARC, min_SPARC);
     double t1 = MPI_Wtime();
-    Vnl_mod(min_SPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, hx, MPI_COMM_WORLD);
+    Vnl_mod(min_SPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, hx, comm);
     double t2 = MPI_Wtime();
     double final = (t2-t1)*1e3;
     //printf("total time :%f\n", final);
