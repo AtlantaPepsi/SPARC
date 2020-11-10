@@ -67,10 +67,14 @@ OBJSC = main.o initialization.o readfiles.o atomdata.o parallelization.o relax.o
         linearSolver.o mixing.o exchangeCorrelation.o eigenSolver.o eigenSolverKpt.o energy.o    \
         forces.o stress.o pressure.o finalization.o vnl_mod.o
 
+
 LIBBASE = ../lib/sparc
 TESTBASE = ../.ci
 
 override CC=mpicc
+
+CFLAGS_GPU:=-ccbin=$(CC)  -Xcompiler -std=gnu++98,-O3,-g,-xHost  -G 
+CFLAGS_BASE:=$(CFLAGS) -g -O3 
 
 all: sparc
 
@@ -78,7 +82,10 @@ all: sparc
 # %.o : %.c
 # 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-sparc: $(OBJSC)
+%.o: %.cu
+	$(NVCC) $(CPPFLAGS) -DUSE_GPU=1 $(CFLAGS_BASE) $(CFLAGS_GPU) -c $< -o $@
+
+sparc: $(OBJSC) 
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $(LIBBASE) $^ $(LDLIBS)
 
 .PHONY: clean
