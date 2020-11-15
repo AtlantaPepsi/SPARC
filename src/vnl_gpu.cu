@@ -41,8 +41,8 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
 
             int ndc = Atom_Influence_nloc[type].ndc[atom];
 
-            dim3 gridDims( (ndc-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1);
-            const size_t shmem = 16 * sizeof(double);//ndc * sizeof(double);
+            dim3 gridDims( (ndc-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1 );
+            const size_t shmem = 16 * sizeof(int);//ndc * sizeof(double);
 
             double *d_xrc; // = (double *)malloc( ndc * ncol * sizeof(double));
             cudaMalloc((void **)&d_xrc,  ndc * ncol * sizeof(double));
@@ -86,7 +86,8 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
 
     /* go over all atoms and multiply gamma_Jl to the inner product */
     //Start = MPI_Wtime();
-    Vnl_gammaV(pSPARC, alpha, ncol);
+    dim3 gridDim( (d_SPARC->IP_displ[d_SPARC->n_atom]-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1 );
+    Vnl_gammaV<<<gridDim, blockDims>>>(pSPARC, alpha, ncol);
     //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
 
 
@@ -100,7 +101,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             int ndc = Atom_Influence_nloc[type].ndc[atom];
 
             dim3 gridDims( (ndc-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1);
-            const size_t shmem = 16 * sizeof(double);//ndc * sizeof(double);
+            const size_t shmem = 16 * sizeof(int);//ndc * sizeof(double);
 
             double *Vnlx;// = (double *)malloc( ndc * ncol * sizeof(double));
             cudaMalloc((void **)&Vnlx,  ndc * ncol * sizeof(double));
@@ -128,7 +129,7 @@ __global__
 void x_rc(double *d_xrc, double *d_x, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
           int ncol, int type, int atom, int DMnd)
 {
-    extern __shared__ double shared_grid_pose[];
+    extern __shared__ int shared_grid_pose[];
 
     int ndc = d_Atom_Influence_nloc[type].ndc[atom];
 
@@ -186,7 +187,7 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
             continue;
         }
 
-        if (leftover - ( revotfel + d_SPARC->psd[type].ppl[l]*(2*l+1) ) > 0) {
+        if (leftover - ( revotfel + (d_SPARC->ppl[type])[l]*(2*l+1) ) > 0) {
             ldispl += (d_SPARC->ppl[type])[l];
             revotfel += (d_SPARC->ppl[type])[l] * (2 * l + 1);
         } else {
@@ -204,7 +205,7 @@ void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_In
             int ncol, int type, int atom, int DMnd)
 {
 
-    extern __shared__ double shared_grid_pose[];
+    extern __shared__ int shared_grid_pose[];
 
     int ndc = d_Atom_Influence_nloc[type].ndc[atom];
 
