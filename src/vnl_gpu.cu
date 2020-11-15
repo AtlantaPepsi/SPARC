@@ -16,7 +16,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
              const NLOC_PROJ_OBJ *nlocProj,
              const min_SPARC_OBJ *d_SPARC, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
              const NLOC_PROJ_OBJ *d_locProj,
-             const int DMnd, const int ncol, double *d_x, double *d_Hx, int GPUDirect)
+             const int DMnd, const int ncol, double *d_x, double *d_Hx, MPI_Comm comm, int GPUDirect)
 {
     cudaError_t cudaStat;
     cublasStatus_t stat;
@@ -57,7 +57,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
                                d_xrc, ndc, &one,
                                d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj);
 
-            cudafree(d_xrc);
+            cudaFree(d_xrc);
         }
     }
     //printf("1st total: %f\n",(MPI_Wtime()-Start)*1e3);
@@ -113,15 +113,15 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
                                d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj, &zero,
                                Vnlx, ndc);
 
-            update<<<gridDims, blockDims, shmem>>>(d_Hx, Vnlx, d_Atom_Influence_nloc, nloc, type, atom, DMnd);
+            update<<<gridDims, blockDims, shmem>>>(d_Hx, Vnlx, d_Atom_Influence_nloc, ncol, type, atom, DMnd);
 
-            cudafree(Vnlx);
+            cudaFree(Vnlx);
         }
     }
     //printf("3rd total: %f\n",(MPI_Wtime()-Start)*1e3);
 
-    cudafree(d_alpha);
-    cublasDestroy(&stat);
+    cudaFree(d_alpha);
+    cublasDestroy(handle);
 }
 
 __global__
@@ -174,7 +174,7 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
     //int nproj = d_SPARC->IP_displ[i+1] - d_SPARC->IP_displ[i];
     //leftover %= nproj;
 
-    int lmax = d_SPARC->psd[type].lmax;
+    int lmax = d_SPARC->lmax[type];
     int lloc = d_SPARC->localPsd[type];
 
     int l = 0;
@@ -182,17 +182,17 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
     int revotfel = 0;
     for (l = 0; l <= lmax; l++) {
         if (l == lloc) {
-            ldispl += d_SPARC->psd[type].ppl[l];
+            ldispl += (d_SPARC->ppl[type])[l];
             continue;
         }
 
         if (leftover - ( revotfel + d_SPARC->psd[type].ppl[l]*(2*l+1) ) > 0) {
-            ldispl += d_SPARC->psd[type].ppl[l];
-            revotfel += d_SPARC->psd[type].ppl[l] * (2 * l + 1);
+            ldispl += (d_SPARC->ppl[type])[l];
+            revotfel += (d_SPARC->ppl[type])[l] * (2 * l + 1);
         } else {
             leftover -= revotfel;
             int np = leftover / (2*l+1);
-            d_alpha[index] *=  d_SPARC->psd[type].Gamma[ldispl+np];
+            d_alpha[index] *=  (d_SPARC->Gamma[type])[ldispl+np];
             return;
         }
     }
@@ -201,7 +201,7 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
 
 __global__
 void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
-            int ncol, int type, int atom)
+            int ncol, int type, int atom, int DMnd)
 {
 
     extern __shared__ double shared_grid_pose[];
@@ -219,7 +219,7 @@ void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_In
     __syncthreads();
 
     if (index < ndc && n < ncol)
-        Hx[n*DMnd + shared_grid_pose[threadIdx.x]] += Vnlx[n*ndc+index];
+        d_Hx[n*DMnd + shared_grid_pose[threadIdx.x]] += Vnlx[n*ndc+index];
 
 }
 
