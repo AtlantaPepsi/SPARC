@@ -1,8 +1,10 @@
-#ifdef __cplusplus
-extern "C" { //}
-#endif
+//#ifdef __cplusplus
+extern "C" { //
+
+//#endif
 
 
+#include "vnl_mod.h"
 #include "gpu.h"
 //#include "stencil_gpu.h"
 //#include "memory.h"
@@ -16,6 +18,6 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
 
 
 
-#ifdef __cplusplus
+//#ifdef __cplusplus
 }
-#endif
+//#endif

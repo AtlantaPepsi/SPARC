@@ -144,7 +144,7 @@ typedef struct _ATOM_NLOC_INFLUENCE_OBJ {
 typedef struct _NLOC_PROJ_OBJ {
     int nproj;    // number of projectors per atom
     double **Chi; // projector real
-    double complex **Chi_c; // projector complex
+    double _Complex **Chi_c; // projector complex
 } NLOC_PROJ_OBJ;
 
 
@@ -356,8 +356,8 @@ typedef struct _SPARC_OBJ{
     double precond_resta_q0;
     double precond_resta_Rs;
     double precondcoeff_k; // constant term in the rational fit of the preconditioner
-    double complex *precondcoeff_a; // coeff in the numerator of the rational fit of the preconditioner
-    double complex *precondcoeff_lambda_sqr; // coeff in the denominator of the rational fit of the preconditioner
+    double _Complex *precondcoeff_a; // coeff in the numerator of the rational fit of the preconditioner
+    double _Complex *precondcoeff_lambda_sqr; // coeff in the denominator of the rational fit of the preconditioner
 
     int RelaxCount;     // current relaxation step
     int StressCount;    // current stress count used in full relaxation
@@ -368,7 +368,7 @@ typedef struct _SPARC_OBJ{
     double *CUTOFF_z;       // pseudocharge cutoff radius in z-direction
     
     double *Lanczos_x0;                       // initial guess vector for Lanczos
-    double complex *Lanczos_x0_complex;       // initial guess vector (complex) for Lanczos
+    double _Complex *Lanczos_x0_complex;       // initial guess vector (complex) for Lanczos
     //double *electronDensGLB;    // global electron density (whole vector), "rho" (GLOBAL)
     //double *Veff_loc;           // global effective local potential vector (GLOBAL)
     double *Veff_loc_dmcomm;      // effective local potential distributed in psi-domain (LOCAL)
@@ -407,10 +407,10 @@ typedef struct _SPARC_OBJ{
     double *Yorb;                 // Kohn-Sham orbitals (LOCAL)
     double *Xorb_BLCYC;           // block-cyclically distributed orbitals (LOCAL)
     double *Yorb_BLCYC;           // block-cyclically distributed orbitals (LOCAL)
-    double complex *Xorb_kpt;                 // Kohn-Sham orbitals (LOCAL)
-    double complex *Yorb_kpt;                 // Kohn-Sham orbitals (LOCAL)
-    double complex *Xorb_BLCYC_kpt;           // block-cyclically distributed orbitals (LOCAL)
-    double complex *Yorb_BLCYC_kpt;           // block-cyclically distributed orbitals (LOCAL)
+    double _Complex *Xorb_kpt;                 // Kohn-Sham orbitals (LOCAL)
+    double _Complex *Yorb_kpt;                 // Kohn-Sham orbitals (LOCAL)
+    double _Complex *Xorb_BLCYC_kpt;           // block-cyclically distributed orbitals (LOCAL)
+    double _Complex *Yorb_BLCYC_kpt;           // block-cyclically distributed orbitals (LOCAL)
     int    nr_orb_BLCYC;          // number of rows of the local distributed orbitals owned by the process (LOCAL)
     int    nc_orb_BLCYC;          // number of cols of the local distributed orbitals owned by the process (LOCAL)
     int    nr_Hp_BLCYC;           // number of rows of the local distributed projected Hamiltonian owned by the process (LOCAL)
@@ -422,9 +422,9 @@ typedef struct _SPARC_OBJ{
     double *Hp;                   // projected Hamiltonian matrix: Hp = Psi' * H * Psi (LOCAL)
     double *Mp;                   // projected mass matrix: Mp = Psi' * Psi (LOCAL)
     double *Q;                    // eigenvectors of the generalized eigenproblem: Hp * Q_i  = lambda_i * Mp * Q_i
-    double complex *Hp_kpt;                   // projected Hamiltonian matrix: Hp = Psi' * H * Psi (LOCAL)
-    double complex *Mp_kpt;                   // projected mass matrix: Mp = Psi' * Psi (LOCAL)
-    double complex *Q_kpt;                    // eigenvectors of the generalized eigenproblem: Hp * Q_i  = lambda_i * Mp * Q_i
+    double _Complex *Hp_kpt;                   // projected Hamiltonian matrix: Hp = Psi' * H * Psi (LOCAL)
+    double _Complex *Mp_kpt;                   // projected mass matrix: Mp = Psi' * Psi (LOCAL)
+    double _Complex *Q_kpt;                    // eigenvectors of the generalized eigenproblem: Hp * Q_i  = lambda_i * Mp * Q_i
     double *Hp_s;                 // whole projected Hamiltonian Hp redistributed for solving eigenproblem (GLOBAL)   
     double *Mp_s;                 // whole projected mass matrix Mp redistributed for solving eigenproblem (GLOBAL)
     int useLAPACK;                // flag for using LAPACK_dsygv to solve subspace eigenproblem

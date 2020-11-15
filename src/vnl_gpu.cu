@@ -1,16 +1,17 @@
-#ifdef __cplusplus
-extern "C" { //}
-#endif
 
 
 #define IDX2C(i,j,ld) (((j)*(ld))+(i))
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <gpu.h>
+#include "gpu.h"
+#include "mpi.h"
 #include "vnl_gpu.h"
 #include "cublas_v2.h"
 
+#ifdef __cplusplus
+extern "C" { //}
+#endif
 void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
              const NLOC_PROJ_OBJ *nlocProj,
              const min_SPARC_OBJ *d_SPARC, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
@@ -25,7 +26,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
     stat = cublasCreate(&handle);
 
     /* compute nonlocal operator times vector(s) */
-
+    double one = 1.0, zero = 0.0;
     double *d_alpha;
     cudaMalloc((void **)&d_alpha,  pSPARC->IP_displ[pSPARC->n_atom] * ncol * sizeof(double));
     // |pSPARC->IP_displ[pSPARC->n_atom]|  = n_atom * nproj(of each atom)
@@ -41,19 +42,19 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             int ndc = Atom_Influence_nloc[type].ndc[atom];
 
             dim3 gridDims( (ndc-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1);
-            const size_t shmem = 16 * sizeof(double)//ndc * sizeof(double);
+            const size_t shmem = 16 * sizeof(double);//ndc * sizeof(double);
 
             double *d_xrc; // = (double *)malloc( ndc * ncol * sizeof(double));
             cudaMalloc((void **)&d_xrc,  ndc * ncol * sizeof(double));
 
-            x_rc<<<gridDims, blockDims, shmem>>>(d_xrc, d_x, d_Atom_Influence_nloc, nloc, type, atom, DMnd);
+            x_rc<<<gridDims, blockDims, shmem>>>(d_xrc, d_x, d_Atom_Influence_nloc, ncol, type, atom, DMnd);
 
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
 
             stat = cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N,
                                nlocProj[type].nproj, ncol, ndc,
-                               pSPARC->dV, d_locProj[type].Chi[atom], ndc,
-                               d_xrc, ndc, 1.0,
+                               &(pSPARC->dV), d_locProj[type].Chi[atom], ndc,
+                               d_xrc, ndc, &one,
                                d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj);
 
             cudafree(d_xrc);
@@ -99,7 +100,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             int ndc = Atom_Influence_nloc[type].ndc[atom];
 
             dim3 gridDims( (ndc-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1);
-            const size_t shmem = 16 * sizeof(double)//ndc * sizeof(double);
+            const size_t shmem = 16 * sizeof(double);//ndc * sizeof(double);
 
             double *Vnlx;// = (double *)malloc( ndc * ncol * sizeof(double));
             cudaMalloc((void **)&Vnlx,  ndc * ncol * sizeof(double));
@@ -108,8 +109,8 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
 
             stat = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,                ///!
                                ndc, ncol, nlocProj[type].nproj,
-                               1.0, d_locProj[type].Chi[atom], ndc,
-                               d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj, 0.0,
+                               &one, d_locProj[type].Chi[atom], ndc,
+                               d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj, &zero,
                                Vnlx, ndc);
 
             update<<<gridDims, blockDims, shmem>>>(d_Hx, Vnlx, d_Atom_Influence_nloc, nloc, type, atom, DMnd);
@@ -163,7 +164,7 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
     while (index >= d_SPARC->IP_displ[i]) {     ///<=?
         i++;                                        ///i + 1
         if (i >= temp) {
-            temp += d_SPARC->nAtomv[type]
+            temp += d_SPARC->nAtomv[type];
             type++;
         }
     }
