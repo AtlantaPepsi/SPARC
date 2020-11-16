@@ -1,7 +1,7 @@
-//#ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" { //
 
-//#endif
+#endif
 
 
 #include "vnl_mod.h"
@@ -31,6 +31,6 @@ void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_In
 
 
 
-//#ifdef __cplusplus
+#ifdef __cplusplus
 }
-//#endif
+#endif

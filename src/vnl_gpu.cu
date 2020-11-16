@@ -87,7 +87,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
     /* go over all atoms and multiply gamma_Jl to the inner product */
     //Start = MPI_Wtime();
     dim3 gridDim( (d_SPARC->IP_displ[d_SPARC->n_atom]-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1 );
-    Vnl_gammaV<<<gridDim, blockDims>>>(pSPARC, alpha, ncol);
+    Vnl_gammaV<<<gridDim, blockDims>>>(pSPARC, d_alpha, ncol);
     //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
 
 
