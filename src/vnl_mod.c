@@ -76,7 +76,7 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
 
         if (! nlocProj[type].nproj) continue; // this is typical for hydrogen
 	
-	//#pragma omp parallel for
+	#pragma omp parallel for
         for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
             int ndc = Atom_Influence_nloc[type].ndc[atom];
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
