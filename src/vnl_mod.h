@@ -25,9 +25,16 @@ typedef struct _min_SPARC_OBJ {
 } min_SPARC_OBJ;
 
 
-void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ* min_SPARC);
+void interface(const SPARC_OBJ *pSPARC, min_SPARC_OBJ *min_SPARC);
 
-void free_min_SPARC(min_SPARC_OBJ* min_SPARC);
+void interface_gpu(const SPARC_OBJ *pSPARC,                            min_SPARC_OBJ *min_SPARC,
+                   const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
+                   const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ *d_locProj);
+
+void free_min_SPARC(min_SPARC_OBJ *min_SPARC);
+
+void free_gpu_SPARC(min_SPARC_OBJ *min_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
+                    NLOC_PROJ_OBJ *d_locProj);
 
 void Vnl_mod(
     const min_SPARC_OBJ *pSPARC,
