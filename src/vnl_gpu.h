@@ -1,14 +1,12 @@
-#ifdef __cplusplus
-extern "C" { //
-
-#endif
-
-
 #include "vnl_mod.h"
 #include "gpu.h"
 //#include "stencil_gpu.h"
 //#include "memory.h"
 
+#ifdef __cplusplus
+extern "C" { //
+
+#endif
 
 void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
              const NLOC_PROJ_OBJ *nlocProj,
