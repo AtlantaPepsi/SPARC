@@ -26,14 +26,15 @@ DEBUG_MODE    = 1
 # LDFLAGS += -L$(LAPACKROOT)
 # BLASROOT = /usr/lib64
 # LDFLAGS += -L$(BLASROOT)
-
+NVCC=nvcc
 CPPFLAGS = -Iinclude/
 LDLIBS   = -lrt
 
 ifeq ($(USE_MKL), 1)
 CPPFLAGS += -m64 -I${MKLROOT}/include -DUSE_MKL
-LDFLAGS   = -L${MKLROOT}/lib/intel64
-LDLIBS   += -Wl,--no-as-needed -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl
+LDFLAGS   = -lcudart -lcublas -L${MKLROOT}/lib/intel64 -L /usr/local/pace-apps/manual/packages/nvhpc/20.7/Linux_x86_64/20.7/math_libs/lib64
+LDLIBS   += -Xcompiler \"-Wl,--no-as-needed\" -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread -lm -ldl
+
 else ifeq ($(USE_SCALAPACK), 1)
 CPPFLAGS += -DUSE_SCALAPACK
 LDLIBS   += -lscalapack
@@ -54,11 +55,11 @@ endif
 
 # to compile with DEBUG mode
 ifeq ($(DEBUG_MODE), 1)
-CPPFLAGS += -Wall -g -DDEBUG
+CPPFLAGS += -g -DDEBUG
 endif
 
 # for old Intel compiler, use -qopenmp instead of -fopenmp. ICC 17 and later also accepts -fopenmp.
-CFLAGS = -std=gnu99 -O3 -fopenmp
+CFLAGS = #-std=c++14 -O3 -fopenmp
 
 OBJSC = main.o initialization.o readfiles.o atomdata.o parallelization.o relax.o tools.o md.o    \
         electrostatics.o electronicGroundState.o electronDensity.o orbitalElecDensInit.o         \
@@ -73,7 +74,7 @@ TESTBASE = ../.ci
 
 override CC=mpicc
 
-CFLAGS_GPU:=-ccbin=$(CC)  -Xcompiler -std=gnu++98,-O3,-g,-xHost  -G 
+CFLAGS_GPU:=-ccbin=$(CC)  -Xcompiler -std=gnu++98,-fopenmp,-O3,-g,-xHost  -G 
 CFLAGS_BASE:=$(CFLAGS) -g -O3 
 
 all: sparc
@@ -83,10 +84,11 @@ all: sparc
 # 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 %.o: %.cu
-	$(NVCC) $(CPPFLAGS) -DUSE_GPU=1 $(CFLAGS_BASE) $(CFLAGS_GPU) -c $< -o $@
+	$(NVCC) $(CPPFLAGS) -DUSE_GPU=1  $(CFLAGS_GPU) -c $< -o $@
 
 sparc: $(OBJSC) 
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $(LIBBASE) $^ $(LDLIBS)
+	
+	$(NVCC) $(CFLAGS_GPU) $(LDFLAGS) -o $(LIBBASE) $^ $(LDLIBS)
 
 .PHONY: clean
 clean:

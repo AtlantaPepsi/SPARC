@@ -3,3 +3,7 @@
 .DS_Store
 sparc-EVA
 sparc
+*.out*
+*.restart*
+*.static*
+*.aimd*
