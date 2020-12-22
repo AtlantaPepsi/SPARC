@@ -8,6 +8,30 @@ extern "C" { //
 
 #endif
 
+typedef struct _GPU_GARBAGE_COLLECTOR {
+
+    int n_atom;          // total number of atoms
+    int Ntypes;          // number of atome types
+  
+/// atom_influence
+    int **d_ndc;         // GPU pointers to _ndc at each one of _Ntypes Atom_Influence_obj
+    int ***dd_cpy;       // GPU pointers to _grid_pos of each one of _nAtomv at each one of _Ntypes Atom_Influence_obj
+    int ***tmp_ptr;      // host side memory of dd_cpy     #todo: free in interface code
+  
+/// nloc_chi
+    int ***dd_chi;       // GPU pointers to _chi of each one of _nAtomv at each one of _Ntypes Nloc_Proj_obj 
+    int ***tmp_ptr2;     // host side memory of dd_chi     #todo: free in interface code
+  
+/// sparc_obj
+    int *d_local_psd, *d_nAtomv, *d_IP, *d_lmax; //yatayatayata
+    int **dd_ppl;        // GPU pointers to _ppl for each one of _Ntypes
+    double **dd_gamma;   // GPU pointers to _gamma for each one of _Ntypes
+    int **ppls;          //host side memory of dd_cpy     #todo: free in interface code
+    double **gamma;      //host side memory of dd_cpy     #todo: free in interface code
+
+} GPU_GC;
+  
+  
 void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
              const NLOC_PROJ_OBJ *nlocProj,
              const min_SPARC_OBJ *d_SPARC, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
@@ -27,10 +51,11 @@ void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_In
  
 void interface_gpu(const SPARC_OBJ *pSPARC,                            min_SPARC_OBJ *min_SPARC,
                    const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
-                   const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ *d_locProj);
+                   const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ *d_locProj,
+                   GPU_GC *gc);
   
 void free_gpu_SPARC(min_SPARC_OBJ *min_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
-                    NLOC_PROJ_OBJ *d_locProj);
+                    NLOC_PROJ_OBJ *d_locProj, GPU_GC *gc);
 
 
 
