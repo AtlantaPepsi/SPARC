@@ -105,38 +105,6 @@ void Vnl_mod(const min_SPARC_OBJ *pSPARC, const int DMnd, const ATOM_NLOC_INFLUE
     }
 
 
-/*
-    // go over all atoms and multiply gamma_Jl to the inner product
-    int natom = 0;
-    //Start = MPI_Wtime();
-    for (int type = 0; type < pSPARC->Ntypes; type++) {
-        int lloc = pSPARC->localPsd[type];
-        int lmax = pSPARC->lmax[type]; 
-	//#pragma omp parallel for
-        for (int atom = 0; atom < pSPARC->nAtomv[type]; atom++) {     
-	    int count = 0;
-            int start_index = pSPARC->IP_displ[natom];
-	    for (int n = 0; n < ncol; n++) {
-                int ldispl = 0;
-                for (int l = 0; l <= lmax; l++) {
-                    // skip the local l
-                    if (l == lloc) {
-                        ldispl += (pSPARC->ppl[type])[l];                         
-                        continue;
-                    }
-                    for (int np = 0; np < (pSPARC->ppl[type])[l]; np++) {
-                        for (int m = -l; m <= l; m++) {
-                            alpha[count+start_index] *= (pSPARC->Gamma[type])[ldispl+np];
-                        }
-                    }
-                    ldispl += (pSPARC->ppl[type])[l];
-                }
-            }
-        }
-	natom += pSPARC->nAtomv[type];
-    }
-    //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
-*/
    
     int count = 0;
     for (int ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
@@ -208,7 +176,7 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
     Vnl_mod(min_SPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, hx, MPI_COMM_WORLD);
     double t2 = MPI_Wtime();
     double final = (t2-t1)*1e3;
-    printf("total time :%f\n", final);
+    //printf("total time :%f\n", final);
 
     double local_err;
     int err_count = 0;
@@ -218,18 +186,50 @@ void test_vnl(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_I
         // Consider a relative error of 1e-10 to guard against floating point rounding
         if ((local_err > 1e-10) || isnan(local_err))
         {
-            //printf("At index %d: %.15f vs. %.15f\n", ix, fabs(psi_new[ix]), fabs(psi_chk[ix]));
+            printf("At index %d: %.15f vs. %.15f\n", ix, fabs(hx[ix]), fabs(Hx[ix]));
             err_count = err_count + 1;
         }
     }
 
-
-    printf("There are %d errors out of %d entries!\n", err_count, ncol*DMnd);
-
+    if (err_count > 0) {
+    	printf("There are %d errors out of %d entries!\n", err_count, ncol*DMnd);
+    	exit(0);
+    }
     //Free_SPARC(pSPARC);
     free_min_SPARC(min_SPARC);
 
-    exit(0);
 
 
 }
+/*
+    // go over all atoms and multiply gamma_Jl to the inner product
+    int natom = 0;
+    //Start = MPI_Wtime();
+    for (int type = 0; type < pSPARC->Ntypes; type++) {
+        int lloc = pSPARC->localPsd[type];
+        int lmax = pSPARC->lmax[type]; 
+	//#pragma omp parallel for
+        for (int atom = 0; atom < pSPARC->nAtomv[type]; atom++) {     
+	    int count = 0;
+            int start_index = pSPARC->IP_displ[natom];
+	    for (int n = 0; n < ncol; n++) {
+                int ldispl = 0;
+                for (int l = 0; l <= lmax; l++) {
+                    // skip the local l
+                    if (l == lloc) {
+                        ldispl += (pSPARC->ppl[type])[l];                         
+                        continue;
+                    }
+                    for (int np = 0; np < (pSPARC->ppl[type])[l]; np++) {
+                        for (int m = -l; m <= l; m++) {
+                            alpha[count+start_index] *= (pSPARC->Gamma[type])[ldispl+np];
+                        }
+                    }
+                    ldispl += (pSPARC->ppl[type])[l];
+                }
+            }
+        }
+	natom += pSPARC->nAtomv[type];
+    }
+    //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
+*/
