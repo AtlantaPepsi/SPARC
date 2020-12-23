@@ -283,10 +283,15 @@ void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_In
     }
 }
 
-GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SPARC_OBJ *d_SPARC,
-                      const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
-                      const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ *d_locProj)
+GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SPARC_OBJ **dd_SPARC,
+                      const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, ATOM_NLOC_INFLUENCE_OBJ **dd_Atom_Influence_nloc,
+                      const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ **dd_locProj)
 {
+    min_SPARC_OBJ *d_SPARC                         = *dd_SPARC;
+    ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc = *dd_Atom_Influence_nloc;
+    NLOC_PROJ_OBJ *d_locProj                       = *dd_locProj;
+    
+  
     GPU_GC *gc = (GPU_GC*) malloc(sizeof(GPU_GC));
 
     min_SPARC_OBJ *min_SPARC = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
@@ -310,6 +315,7 @@ GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SP
 
     cudaMalloc((void **)&d_SPARC,                sizeof(min_SPARC_OBJ));
     cudaMalloc((void **)&d_Atom_Influence_nloc,  sizeof(ATOM_NLOC_INFLUENCE_OBJ) * Ntypes);
+    cudaMalloc((void **)&d_locProj,              sizeof(NLOC_PROJ_OBJ) * Ntypes);
 
     cudaMemcpy(d_SPARC, min_SPARC, sizeof(min_SPARC_OBJ), cudaMemcpyHostToDevice);
     gpuErrchk(cudaPeekAtLastError() );
@@ -478,9 +484,9 @@ double test_gpu(const SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Inf
     min_SPARC_OBJ *min_SPARC = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
     interface(pSPARC, min_SPARC);
   
-    GPU_GC *gc = interface_gpu(pSPARC,              d_SPARC,
-                               Atom_Influence_nloc, d_Atom_Influence_nloc,
-                               nlocProj,            d_locProj);      //#todo: modify psparc to min sparc
+    GPU_GC *gc = interface_gpu(pSPARC,              &d_SPARC,
+                               Atom_Influence_nloc, &d_Atom_Influence_nloc,
+                               nlocProj,            &d_locProj);      //#todo: modify psparc to min sparc
   
     double *d_x, *d_Hx;
     cudaMalloc((void **)&d_x,  DMnd * ncol * sizeof(double));
