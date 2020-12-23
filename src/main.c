@@ -50,8 +50,7 @@ int main(int argc, char *argv[]) {
         Calculate_electronicGroundState(&SPARC);
     
     Finalize(&SPARC);
-double ans=0;
-Vnl_vec_mult(NULL, 1, NULL, NULL, 1, NULL, NULL, comm, &ans);
+double ans=Vnl_vec_mult(NULL, 1, NULL, NULL, 1, NULL, NULL, comm);
 printf("total: %f\n", ans);
     MPI_Barrier(MPI_COMM_WORLD);
     // end timer
