@@ -57,7 +57,7 @@ GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SP
 void free_gpu_SPARC(min_SPARC_OBJ *min_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
                     NLOC_PROJ_OBJ *d_locProj, GPU_GC *gc);
 
-double test_vnl(const SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, const NLOC_PROJ_OBJ *nlocProj,
+double test_gpu(const SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, const NLOC_PROJ_OBJ *nlocProj,
                 const int DMnd, const int ncol, double *x, double *Hx, MPI_Comm comm);
 
 
