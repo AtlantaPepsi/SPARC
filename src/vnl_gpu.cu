@@ -467,6 +467,58 @@ void free_gpu_SPARC(min_SPARC_OBJ *d_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Infl
     free(gc);
 }
 
+double test_gpu(const SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, const NLOC_PROJ_OBJ *nlocProj,
+                const int DMnd, const int ncol, double *x, double *Hx, MPI_Comm comm, double *hx)
+{
+    //hx is before hx, Hx is truth
+    min_SPARC_OBJ *d_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc, NLOC_PROJ_OBJ *d_locProj;
+  
+    GPU_GC *gc = interface_gpu(pSPARC,              d_SPARC,
+                               Atom_Influence_nloc, d_Atom_Influence_nloc,
+                               nlocProj,            d_locProj);
+  
+    double *d_x, *d_Hx, ;
+    cudaMalloc((void **)&d_x,  DMnd * ncol * sizeof(double));
+    cudaMalloc((void **)&d_Hx,  DMnd * ncol * sizeof(double));
+    cudaMemcpy(d_x, x, DMnd * ncol * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_Hx, hx, DMnd * ncol * sizeof(double), cudaMemcpyHostToDevice);
+    
+  
+    double t1 = MPI_Wtime();
+    Vnl_gpu(pSPARC, Atom_Influence_nloc, nlocProj,
+            d_SPARC, d_Atom_Influence_nloc, d_locProj,
+            DMnd, ncol, d_x, d_Hx, comm, 0);
+    double t2 = MPI_Wtime();
+    
+    //copy answer back
+    double *d_hx = (double *)malloc(DMnd * ncol * sizeof(double));
+    cudaMemcpy(d_hx, d_Hx, DMnd * ncol * sizeof(double), cudaMemcpyDeviceToHost);
+  
+    free_gpu_SPARC(d_SPARC, d_Atom_Influence_nloc, d_locProj, gc);
+    cudaFree(d_x);
+    cudaFree(d_Hx);
+  
+  
+    double local_err;
+    int err_count = 0;
+    for (int ix = 0; ix < DMnd*ncol; ix++)
+    {
+        local_err = fabs(d_hx[ix] - Hx[ix]) / fabs(Hx[ix]);
+        // Consider a relative error of 1e-10 to guard against floating point rounding
+        if ((local_err > 1e-10) || isnan(local_err))
+        {
+            //printf("At index %d: %.15f vs. %.15f\n", ix, fabs(psi_new[ix]), fabs(psi_chk[ix]));
+            err_count = err_count + 1;
+        }
+    }
+
+    if (err_count > 1) {
+        printf("There are %d errors out of %d entries!\n", err_count, ncol*DMnd);
+        exit(0);
+    }
+    free(d_hx);
+    
+}
 
 #ifdef __cplusplus
 }
