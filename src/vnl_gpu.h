@@ -20,8 +20,8 @@ typedef struct _GPU_GARBAGE_COLLECTOR {
     int ***tmp_ptr;      // host side memory of dd_cpy     #todo: free in interface code
   
 /// nloc_chi
-    int ***dd_chi;       // GPU pointers to _chi of each one of _nAtomv at each one of _Ntypes Nloc_Proj_obj 
-    int ***tmp_ptr2;     // host side memory of dd_chi     #todo: free in interface code
+    double ***dd_chi;       // GPU pointers to _chi of each one of _nAtomv at each one of _Ntypes Nloc_Proj_obj 
+    double ***tmp_ptr2;     // host side memory of dd_chi     #todo: free in interface code
   
 /// sparc_obj
     int *d_local_psd, *d_nAtomv, *d_IP, *d_lmax; //yatayatayata

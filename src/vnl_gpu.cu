@@ -285,7 +285,7 @@ void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_In
 
 GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SPARC_OBJ *d_SPARC,
                       const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
-                      const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ *d_locProj);
+                      const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ *d_locProj)
 {
     GPU_GC *gc = (GPU_GC*) malloc(sizeof(GPU_GC));
 
@@ -398,18 +398,18 @@ GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SP
 
 
     //deep copy of nonlocal chi's
-    gc->dd_chi   = (int***) malloc(sizeof(int**) * Ntypes);
-    gc->tmp_ptr2 = (int***) malloc(sizeof(int**) * Ntypes);
+    gc->dd_chi   = (double***) malloc(sizeof(double**) * Ntypes);
+    gc->tmp_ptr2 = (double***) malloc(sizeof(double**) * Ntypes);
 
     for(int i=0; i<Ntypes; i++) {
         double** dd_chi;
         double** tmp_ptr2 = (double **)malloc( sizeof(double*) * pSPARC->nAtomv[i] );
         for(int j = 0; j < pSPARC->nAtomv[i]; j++) {
             int ndc = Atom_Influence_nloc[i].ndc[j]; 
-            cudaMalloc((void **)&&tmp_ptr2[j],  ndc * nlocProj[i].nproj * sizeof(double));
+            cudaMalloc((void **)&tmp_ptr2[j],  ndc * nlocProj[i].nproj * sizeof(double));
             cudaMemcpy(tmp_ptr2[j], nlocProj[i].Chi[j], ndc * nlocProj[i].nproj * sizeof(double), cudaMemcpyHostToDevice);
         }
-        cudaMemcpy(dd_chi, tmp_ptr2, sizeof(tmp_ptr), cudaMemcpyHostToDevice);
+        cudaMemcpy(dd_chi, tmp_ptr2, sizeof(tmp_ptr2), cudaMemcpyHostToDevice);
         cudaMemcpy(&(d_locProj[i].Chi), &dd_chi, sizeof(double**), cudaMemcpyHostToDevice);
         gc->dd_chi[i]   = dd_chi;
         gc->tmp_ptr2[i] = tmp_ptr2;
@@ -430,7 +430,7 @@ void free_gpu_SPARC(min_SPARC_OBJ *d_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Infl
     cudaFree(gc->d_IP);
     cudaFree(gc->d_lmax);
 
-    for(int i = 0; i < Ntypes; i++) {
+    for(int i = 0; i < gc->Ntypes; i++) {
         cudaFree(gc->d_ndc[i]);
         int **tmp_ptr = gc->tmp_ptr[i];
         cudaFree(gc->dd_cpy);
