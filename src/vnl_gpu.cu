@@ -404,6 +404,8 @@ GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SP
     for(int i=0; i<Ntypes; i++) {
         double** dd_chi;
         double** tmp_ptr2 = (double **)malloc( sizeof(double*) * pSPARC->nAtomv[i] );
+        cudaMalloc((void**)&dd_chi, sizeof(double*) * pSPARC->nAtomv[i] );
+      
         for(int j = 0; j < pSPARC->nAtomv[i]; j++) {
             int ndc = Atom_Influence_nloc[i].ndc[j]; 
             cudaMalloc((void **)&tmp_ptr2[j],  ndc * nlocProj[i].nproj * sizeof(double));
