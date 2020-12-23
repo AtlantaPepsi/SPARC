@@ -683,18 +683,17 @@ void CalculateNonlocalInnerProductIndex(SPARC_OBJ *pSPARC)
 /**
  * @brief   Calculate Vnl times vectors in a matrix-free way.
  */
-void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
-                  NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm, double *ans)
+double Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
+                  NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm)
 {
     double *hx;
     hx = (double *)malloc(DMnd * ncol * sizeof(double));
     memcpy(hx, Hx, DMnd * ncol * sizeof(double));
     double static time = 0.0;
     double Start = MPI_Wtime();
+	
 if(pSPARC==NULL){
-
-    *ans = time;
-    return;
+    return time;
 }
 /*	static int show = 0;
 if (show == 0) {
@@ -792,6 +791,7 @@ if (show == 0) {
     //printf("total: %f\n", time);
     //printf("done!\n");
     //exit(0);
+    return 0;
 }
 
 
