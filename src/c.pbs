@@ -1,0 +1,16 @@
+#PBS -N gpuTest             # job name
+#PBS -l nodes=1:ppn=2:gpus=2    # number of nodes, cores per node, and gpus required
+#PBS -l pmem=5gb                # memory per core
+#PBS -l walltime=15:00          # duration of the job (ex: 15 min)
+#PBS -q pace-ice-gpu                # queue name (where job is submitted)
+#PBS -j oe                      # combine output and error messages into 1 file
+#PBS -o gpuTest.out         # output file name
+
+module load nvhpc
+
+#nvidia-smi
+
+cd SPARC/tests/MeshConvergence/Si8
+
+mpirun -np 2 ../../../lib/sparc -name Si8-ONCV-0.4
+
