@@ -47,8 +47,8 @@ void CalculateNonlocalInnerProductIndex(SPARC_OBJ *pSPARC);
 /**
  * @brief   Calculate Vnl times vectors in a matrix-free way.
  */
-void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, 
-                  NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm, double* ans);
+double Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, 
+                  NLOC_PROJ_OBJ *nlocProj, int ncol, double *x, double *Hx, MPI_Comm comm);
 
 
 
