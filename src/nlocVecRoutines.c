@@ -785,9 +785,10 @@ if (show == 0) {
     }
 
     //test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm, hx);
+    time += test_gpu(pSPARC, Atom_Influence_nloc, nlocProj, DMnd, ncol, x, Hx, comm, hx);
+
     free(alpha);
     free(hx);
-    time += (MPI_Wtime()-Start)*1e3;
     //printf("total: %f\n", time);
     //printf("done!\n");
     //exit(0);
