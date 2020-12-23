@@ -4,12 +4,12 @@
 #include <math.h>
 #include "gpu.h"
 #include "mpi.h"
-#include "vnl_gpu.h"
 #include "cublas_v2.h"
 
 #ifdef __cplusplus
 extern "C" { //}
 #endif
+#include "vnl_gpu.h"
 void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc,
              const NLOC_PROJ_OBJ *nlocProj,
              const min_SPARC_OBJ *d_SPARC, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
