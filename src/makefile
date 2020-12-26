@@ -11,7 +11,7 @@ USE_SCALAPACK = 0
 # Set USE_DP_SUBEIG = 0 to use ScaLAPACK rather than SPARC routines
 USE_DP_SUBEIG = 1
 # Set DEBUG_MODE = 1 to run with debug mode and print debug output
-DEBUG_MODE    = 1
+DEBUG_MODE    = 0
 
 # Specify the path MKLROOT if it's not already set to compile with MKL, e.g,
 # MKLROOT = /opt/intel/compilers_and_libraries_2017.4.196/linux/mkl

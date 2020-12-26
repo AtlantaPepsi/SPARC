@@ -50,9 +50,9 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol);
 void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
             int ncol, int type, int atom, int DMnd);
  
-GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SPARC_OBJ **min_SPARC,
-                      const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, ATOM_NLOC_INFLUENCE_OBJ **d_Atom_Influence_nloc,
-                      const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ **d_locProj);
+GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SPARC_OBJ *min_SPARC,
+                      const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
+                      const NLOC_PROJ_OBJ *nlocProj,                      NLOC_PROJ_OBJ *d_locProj);
   
 void free_gpu_SPARC(min_SPARC_OBJ *min_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc,
                     NLOC_PROJ_OBJ *d_locProj, GPU_GC *gc);
