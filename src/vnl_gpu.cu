@@ -20,7 +20,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
     cublasStatus_t stat;
     cublasHandle_t handle;
     dim3 blockDims(16,16);
-    static int iter = 0;
+    //static int iter = 0;
     stat = cublasCreate(&handle);
 
     /* compute nonlocal operator times vector(s) */
@@ -38,7 +38,6 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
         for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
 
             int ndc = Atom_Influence_nloc[type].ndc[atom];
-//            printf("\n\natom: %d\n",atom);
 
             dim3 gridDims( (ndc-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1 );
             const size_t shmem = 16 * sizeof(int);//ndc * sizeof(double);
@@ -51,7 +50,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             x_rc<<<gridDims, blockDims, shmem>>>(d_xrc, d_x, d_Atom_Influence_nloc, ncol, type, atom, DMnd);
     gpuErrchk(cudaPeekAtLastError() );
 
-if(iter ==38 && atom == 3){
+/*if(iter ==38 && atom == 3){
             double *xrc = (double *)calloc( ndc * ncol, sizeof(double));
             cudaMemcpy(xrc, d_xrc, ndc * ncol * sizeof(double), cudaMemcpyDeviceToHost);
             double *chi = (double *)calloc( ndc * nlocProj[type].nproj, sizeof(double));
@@ -59,15 +58,13 @@ if(iter ==38 && atom == 3){
 	    double a = 0;
 	    for (int i = 0; i < ndc; i++)
 		a +=  chi[i] * xrc[ndc+i] ;		
-            printf("gpu autism: %.15f\n\n",a*pSPARC->dV);
+            printf("gpu 0,1: %.15f\n\n",a*pSPARC->dV);
 
-}
+}*/
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
 
     gpuErrchk(cudaPeekAtLastError() );
-            /*double *chi;
-            cudaMalloc((void **)&chi,  ndc * nlocProj[type].nproj * sizeof(double));
-            cudaMemcpy(chi, nlocProj[type].Chi[atom], ndc * nlocProj[type].nproj * sizeof(double), cudaMemcpyHostToDevice);*/
+          
 
             stat = cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N,
                                nlocProj[type].nproj, ncol, ndc,
@@ -93,17 +90,14 @@ if(iter ==38 && atom == 3){
 
     //printf("xv exited safely\n\n");
 
-    /*double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
-    //printf("xv exited safely\n\n");
 
-    /*double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
-    cudaMemcpy(af, d_alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol * sizeof(double), cudaMemcpyDeviceToHost);
-    printf("alpha copy:%f \n", af[0]);*/
-if(iter==38) {
+   
+/*if(iter==38) {
     double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
     cudaMemcpy(af, d_alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol * sizeof(double), cudaMemcpyDeviceToHost);
     printf("alpha copy:%.15f \n", af[584]);
-}
+}*/
+	
     /* if there are domain parallelization over each band,
      * we need to sum over all processes over domain comm */
     int commsize;
@@ -157,11 +151,12 @@ if(iter==38) {
             /*double *chi;
             cudaMalloc((void **)&chi,  ndc * nlocProj[type].nproj * sizeof(double));
             cudaMemcpy(chi, nlocProj[type].Chi[atom], ndc * nlocProj[type].nproj * sizeof(double), cudaMemcpyHostToDevice);*/
-if(iter ==38 && atom == 3){
+		
+/*if(iter ==38 && atom == 3){
 	double *check = (double *)calloc( nlocProj[type].nproj * ndc, sizeof(double));
 	cudaMemcpy(check, d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj * ncol* sizeof(double), cudaMemcpyDeviceToHost);
 	printf("check check:%.15f,index: %d \n", check[nlocProj[type].nproj],pSPARC->IP_displ[atom_index]*ncol+nlocProj[type].nproj);
-}
+}*/
             stat = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,                ///!
                                ndc, ncol, nlocProj[type].nproj,
                                &one, d_locProj[type].Chi[atom], ndc,
@@ -178,7 +173,7 @@ if(iter ==38 && atom == 3){
 
     cudaFree(d_alpha);
     cublasDestroy(handle);
-    iter++;
+    //iter++;
 }
 
 __global__
@@ -191,12 +186,12 @@ void x_rc(double *d_xrc, double *d_x, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Infl
     int index = blockIdx.x*blockDim.x + threadIdx.x;
     
     int n = blockIdx.y*blockDim.y + threadIdx.y;
-    if (index==0){//&&n==0)
+    //if (index==0){//&&n==0)
     //printf("test1: %d\n",d_Atom_Influence_nloc->atom_index[0]);
     //printf("test2: %d\n",d_Atom_Influence_nloc->grid_pos[0][3]);
     //printf("test3: %p \n",d_Atom_Influence_nloc);
     //printf("test4: %f\n",d_xrc[n*ndc+index]); 
-    }
+    //}
     int ndc = d_Atom_Influence_nloc[type].ndc[atom];
 
 
@@ -275,9 +270,7 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
                 //printf("actual %d\n", actual);
     
             d_alpha[actual] *=  (d_SPARC->Gamma[type])[ldispl+np];
-	    /*if (actual == 584) {
-		printf("gamma%.15f\n",(d_SPARC->Gamma[type])[ldispl+np]);
-	    }
+	    /*
 	    if (actual == 584) {
 		printf("%.15f\n",d_alpha[actual]);
 	    }*/
@@ -310,9 +303,9 @@ void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_In
 
     if (index < ndc && n < ncol) {
         d_Hx[n*DMnd + shared_grid_pose[threadIdx.x]] += Vnlx[n*ndc+index];
-			if (n*DMnd + shared_grid_pose[threadIdx.x]==30488) {
+			/*if (n*DMnd + shared_grid_pose[threadIdx.x]==30488) {
 				printf("gpu vnl i= %d,n = %d,vnl = %.15f,original Hx: %.15f, atom %d \n",index,n, Vnlx[n*ndc+index],d_Hx[n*DMnd + shared_grid_pose[threadIdx.x]],atom );
-			}
+			}*/
     }
 }
 
@@ -375,7 +368,6 @@ GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SP
         gc->tmp_ptr[i] = tmp_ptr;
 
         for(int j = 0; j < pSPARC->nAtomv[i]; j++) {
-    //printf("atom %d \n",j);
             int ndc = Atom_Influence_nloc[i].ndc[j];
             cudaMalloc( (void**)&tmp_ptr[j], sizeof(int) * ndc );
             cudaMemcpy(tmp_ptr[j], Atom_Influence_nloc[i].grid_pos[j], sizeof(int)*ndc, cudaMemcpyHostToDevice);
@@ -515,8 +507,8 @@ double test_gpu(const SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Inf
                 const int DMnd, const int ncol, double *x, double *Hx, MPI_Comm comm, double *hx)
 {
     //hx is before hx, Hx is truth
-static int time = 0;
-static double count = 0.0;
+    //static int iter = 0;
+    static double time = 0.0;
     min_SPARC_OBJ *d_SPARC;
     ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc;
     NLOC_PROJ_OBJ *d_locProj;
@@ -571,13 +563,13 @@ static double count = 0.0;
             printf("cpu: %.15f\n",Hx[ix]);
             printf("local err: %f, index :%d\n",local_err,ix);*/
         }
-        if (ix == 30488) {
+        /*if (ix == 30488) {
 	    int ix = 30488;
             printf("gpu: %f, iter: %d\n",d_hx[ix],time);
             printf("cpu: %f\n",Hx[ix]);
 //            printf("local err: %f\n",local_err);
             //printf("original x on gpu: %.15f\n",xrc[ix]);
-        }
+        }*/
 
     }
 
@@ -587,10 +579,10 @@ static double count = 0.0;
         exit(0);
     }
     free(d_hx);
-    time++;
-    count += (t2-t1)*1e3 ;
+    iter++;
+    time += (t2-t1)*1e3 ;
 printf("ha? %f\n",(t2-t1)*1e3 ); 
-printf("ha? %f\n",count ); 
+printf("ha! %f\n",time ); 
     return (t2-t1)*1e3;
     
 }
