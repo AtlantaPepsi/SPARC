@@ -731,20 +731,18 @@ if (show == 0) {
             cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans, nlocProj[ityp].nproj, ncol, ndc,
                 pSPARC->dV, nlocProj[ityp].Chi[iat], ndc, x_rc, ndc, 1.0,
                 alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj);
-if(iter ==38 && iat == 3){
+/*if(iter ==38 && iat == 3){
 	double a = 0;
 	    for (int i = 0; i < ndc; i++)
 		a +=  nlocProj[ityp].Chi[iat][i] * x_rc[ndc+i] ;		
             printf("cpu autism: %.15f\n\n",a*pSPARC->dV);
 	    printf("cpu alpha:%.15f \n\n", (alpha+pSPARC->IP_displ[atom_index]*ncol)[nlocProj[ityp].nproj]);
-}
+}*/
             free(x_rc);
         }
     }
 
-if(iter ==38 ){
-	printf("cpu...:%.15f \n", alpha[584]);//(alpha+pSPARC->IP_displ[atom_index]*ncol)[nlocProj[ityp].nproj],pSPARC->IP_displ[atom_index]*ncol+nlocProj[ityp].nproj);
-}
+
     // if there are domain parallelization over each band, we need to sum over all processes over domain comm
     int commsize;
     MPI_Comm_size(comm, &commsize);
@@ -784,17 +782,15 @@ if(iter ==38 ){
             ndc = Atom_Influence_nloc[ityp].ndc[iat];
             atom_index = Atom_Influence_nloc[ityp].atom_index[iat];
             Vnlx = (double *)malloc( ndc * ncol * sizeof(double));
-if(iter ==38 && iat == 3){
-	printf("cpu check check:%.15f,index: %d \n", alpha[584],2);//(alpha+pSPARC->IP_displ[atom_index]*ncol)[nlocProj[ityp].nproj],pSPARC->IP_displ[atom_index]*ncol+nlocProj[ityp].nproj);
-}
+
             cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, ndc, ncol, nlocProj[ityp].nproj, 1.0, nlocProj[ityp].Chi[iat], ndc,
                         alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[ityp].nproj, 0.0, Vnlx, ndc);
             for (n = 0; n < ncol; n++) {
                 for (i = 0; i < ndc; i++) {
                     Hx[n*DMnd + Atom_Influence_nloc[ityp].grid_pos[iat][i]] += Vnlx[n*ndc+i];
-			if (iter==38 &&  n*DMnd + Atom_Influence_nloc[ityp].grid_pos[iat][i]==30488) {
+			/*if (iter==38 &&  n*DMnd + Atom_Influence_nloc[ityp].grid_pos[iat][i]==30488) {
 				printf("actual cpu vnl i= %d,n = %d,vnl = %.15f,original Hx: %.15f \n",i,n, Vnlx[n*ndc+i], Hx[n*DMnd + Atom_Influence_nloc[ityp].grid_pos[iat][i]]);
-			}
+			}*/
                 }
             }
             free(Vnlx);
@@ -802,15 +798,15 @@ if(iter ==38 && iat == 3){
     }
 
     //test_vnl(pSPARC, DMnd, Atom_Influence_nloc, nlocProj, ncol, x, Hx, comm, hx);
-    double wtf = test_gpu(pSPARC, Atom_Influence_nloc, nlocProj, DMnd, ncol, x, Hx, comm, hx);
-//printf("ha! %f\n",wtf);
+    test_gpu(pSPARC, Atom_Influence_nloc, nlocProj, DMnd, ncol, x, Hx, comm, hx);
+
 
     free(alpha);
     free(hx);
     //printf("total: %f\n", time);
     //printf("done!\n");
     //exit(0);
-    iter++;
+    
     return 0;
 }
 
