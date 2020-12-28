@@ -4,7 +4,7 @@
 #PBS -l walltime=15:00          # duration of the job (ex: 15 min)
 #PBS -q pace-ice-gpu                # queue name (where job is submitted)
 #PBS -j oe                      # combine output and error messages into 1 file
-#PBS -o ivegpuTest.out         # output file name
+#PBS -o hivegpuTest.out         # output file name
 
 module load nvhpc
 
@@ -13,4 +13,4 @@ module load nvhpc
 cd SPARC/tests/MeshConvergence/Si8
 
 mpirun -np 1  ../../../lib/sparc -name Si8-ONCV-0.4
-
+#cuda-memcheck 

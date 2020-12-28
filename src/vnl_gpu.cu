@@ -20,7 +20,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
     cublasStatus_t stat;
     cublasHandle_t handle;
     dim3 blockDims(16,16);
-
+    static int iter = 0;
     stat = cublasCreate(&handle);
 
     /* compute nonlocal operator times vector(s) */
@@ -38,7 +38,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
         for (int atom = 0; atom < Atom_Influence_nloc[type].n_atom; atom++) {
 
             int ndc = Atom_Influence_nloc[type].ndc[atom];
-            printf("\n\natom: %d\n",atom);
+//            printf("\n\natom: %d\n",atom);
 
             dim3 gridDims( (ndc-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1 );
             const size_t shmem = 16 * sizeof(int);//ndc * sizeof(double);
@@ -51,9 +51,17 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             x_rc<<<gridDims, blockDims, shmem>>>(d_xrc, d_x, d_Atom_Influence_nloc, ncol, type, atom, DMnd);
     gpuErrchk(cudaPeekAtLastError() );
 
-    /*        double *xrc = (double *)calloc( ndc * ncol, sizeof(double));
+if(iter ==38 && atom == 3){
+            double *xrc = (double *)calloc( ndc * ncol, sizeof(double));
             cudaMemcpy(xrc, d_xrc, ndc * ncol * sizeof(double), cudaMemcpyDeviceToHost);
-            printf("gpu xrc: %f\n",xrc[ndc-1]);*/
+            double *chi = (double *)calloc( ndc * nlocProj[type].nproj, sizeof(double));
+            cudaMemcpy(chi, d_locProj[type].Chi[atom], ndc * nlocProj[type].nproj * sizeof(double), cudaMemcpyDeviceToHost);
+	    double a = 0;
+	    for (int i = 0; i < ndc; i++)
+		a +=  chi[i] * xrc[ndc+i] ;		
+            printf("gpu autism: %.15f\n\n",a*pSPARC->dV);
+
+}
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
 
     gpuErrchk(cudaPeekAtLastError() );
@@ -63,8 +71,8 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
 
             stat = cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N,
                                nlocProj[type].nproj, ncol, ndc,
-                               &(pSPARC->dV), nlocProj[type].Chi[atom], ndc,
-                               d_xrc, ndc, &one,
+                               &(pSPARC->dV), d_locProj[type].Chi[atom], ndc,
+                               d_xrc, ndc, &zero,
                                d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj);
 
             if(stat!=CUBLAS_STATUS_SUCCESS) printf("error: %d\n",stat);
@@ -86,9 +94,16 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
     //printf("xv exited safely\n\n");
 
     /*double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
+    //printf("xv exited safely\n\n");
+
+    /*double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
     cudaMemcpy(af, d_alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol * sizeof(double), cudaMemcpyDeviceToHost);
     printf("alpha copy:%f \n", af[0]);*/
-
+if(iter==38) {
+    double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
+    cudaMemcpy(af, d_alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol * sizeof(double), cudaMemcpyDeviceToHost);
+    printf("alpha copy:%.15f \n", af[584]);
+}
     /* if there are domain parallelization over each band,
      * we need to sum over all processes over domain comm */
     int commsize;
@@ -109,16 +124,13 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
 
 
 
-    printf("reduce exited safely\n\n");
+//    printf("reduce exited safely\n\n");
     /* go over all atoms and multiply gamma_Jl to the inner product */
     //Start = MPI_Wtime();
     dim3 gridDim( (pSPARC->IP_displ[pSPARC->n_atom]-1)/blockDims.x + 1, (ncol-1)/blockDims.y + 1 );
     Vnl_gammaV<<<gridDim, blockDims>>>(d_SPARC, d_alpha, ncol);
     //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
 
-    /*double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
-    cudaMemcpy(af, d_alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol * sizeof(double), cudaMemcpyDeviceToHost);
-    printf("alpha copy:%f \n", af[0]);*/
 
     gpuErrchk(cudaPeekAtLastError() );    
     //printf("gamma exited safely\n\n");
@@ -145,10 +157,14 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             /*double *chi;
             cudaMalloc((void **)&chi,  ndc * nlocProj[type].nproj * sizeof(double));
             cudaMemcpy(chi, nlocProj[type].Chi[atom], ndc * nlocProj[type].nproj * sizeof(double), cudaMemcpyHostToDevice);*/
-  
+if(iter ==38 && atom == 3){
+	double *check = (double *)calloc( nlocProj[type].nproj * ndc, sizeof(double));
+	cudaMemcpy(check, d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj * ncol* sizeof(double), cudaMemcpyDeviceToHost);
+	printf("check check:%.15f,index: %d \n", check[nlocProj[type].nproj],pSPARC->IP_displ[atom_index]*ncol+nlocProj[type].nproj);
+}
             stat = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,                ///!
                                ndc, ncol, nlocProj[type].nproj,
-                               &one, nlocProj[type].Chi[atom], ndc,
+                               &one, d_locProj[type].Chi[atom], ndc,
                                d_alpha+pSPARC->IP_displ[atom_index]*ncol, nlocProj[type].nproj, &zero,
                                Vnlx, ndc);
 
@@ -162,6 +178,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
 
     cudaFree(d_alpha);
     cublasDestroy(handle);
+    iter++;
 }
 
 __global__
@@ -198,6 +215,7 @@ void x_rc(double *d_xrc, double *d_x, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Infl
 __global__
 void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
 {
+    static int iter = 0;
     int index = blockIdx.x*blockDim.x + threadIdx.x;
     int n = blockIdx.y*blockDim.y + threadIdx.y;
 
@@ -257,12 +275,18 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
                 //printf("actual %d\n", actual);
     
             d_alpha[actual] *=  (d_SPARC->Gamma[type])[ldispl+np];
-
+	    /*if (actual == 584) {
+		printf("gamma%.15f\n",(d_SPARC->Gamma[type])[ldispl+np]);
+	    }
+	    if (actual == 584) {
+		printf("%.15f\n",d_alpha[actual]);
+	    }*/
             return;
         }
     //printf("gammav: %d, %d\n",ldispl, l);
     }
     //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
+iter++;
 }
 
 __global__
@@ -286,6 +310,9 @@ void update(double *d_Hx, double *Vnlx, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_In
 
     if (index < ndc && n < ncol) {
         d_Hx[n*DMnd + shared_grid_pose[threadIdx.x]] += Vnlx[n*ndc+index];
+			if (n*DMnd + shared_grid_pose[threadIdx.x]==30488) {
+				printf("gpu vnl i= %d,n = %d,vnl = %.15f,original Hx: %.15f, atom %d \n",index,n, Vnlx[n*ndc+index],d_Hx[n*DMnd + shared_grid_pose[threadIdx.x]],atom );
+			}
     }
 }
 
@@ -298,6 +325,7 @@ GPU_GC* interface_gpu(const SPARC_OBJ *pSPARC,                            min_SP
     NLOC_PROJ_OBJ *d_locProj                       = *dd_locProj;*/
     
   
+    gpuErrchk(cudaPeekAtLastError() );
     GPU_GC *gc = (GPU_GC*) malloc(sizeof(GPU_GC));
 
     min_SPARC_OBJ *min_SPARC = (min_SPARC_OBJ*) malloc(sizeof(min_SPARC_OBJ));
@@ -447,7 +475,7 @@ void free_gpu_SPARC(min_SPARC_OBJ *d_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Infl
     for(int i = 0; i < gc->Ntypes; i++) {
         cudaFree(gc->d_ndc[i]);
         int **tmp_ptr = gc->tmp_ptr[i];
-        cudaFree(gc->dd_cpy);
+        cudaFree(gc->dd_cpy[i]);
 
         cudaFree(gc->ppls[i]);
         cudaFree(gc->gamma[i]);
@@ -460,9 +488,12 @@ void free_gpu_SPARC(min_SPARC_OBJ *d_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Infl
         free(tmp_ptr2);
         //cudaFree(gc->dd_chi[i]);
 
-        cudaFree(d_Atom_Influence_nloc+i);
-        cudaFree(d_locProj+i);
     }
+    free(d_locProj);
+    cudaFree(d_Atom_Influence_nloc);
+
+    gpuErrchk(cudaPeekAtLastError() );
+
     free(gc->d_ndc);
     free(gc->dd_cpy);
     free(gc->tmp_ptr);
@@ -477,12 +508,15 @@ void free_gpu_SPARC(min_SPARC_OBJ *d_SPARC, ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Infl
 
     free(gc->nAtomv);
     free(gc);
+    gpuErrchk(cudaPeekAtLastError() );
 }
 
 double test_gpu(const SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Influence_nloc, const NLOC_PROJ_OBJ *nlocProj,
                 const int DMnd, const int ncol, double *x, double *Hx, MPI_Comm comm, double *hx)
 {
     //hx is before hx, Hx is truth
+static int time = 0;
+static double count = 0.0;
     min_SPARC_OBJ *d_SPARC;
     ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Influence_nloc;
     NLOC_PROJ_OBJ *d_locProj;
@@ -525,23 +559,38 @@ double test_gpu(const SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_Inf
   
     double local_err;
     int err_count = 0;
-    for (int ix = 0; ix < DMnd*ncol; ix++)
+    for (int ix = 0; ix < DMnd*ncol; ix++) 
     {
         local_err = fabs(d_hx[ix] - Hx[ix]) / fabs(Hx[ix]);
         // Consider a relative error of 1e-10 to guard against floating point rounding
-        if ((local_err > 1e-10) || isnan(local_err))
+        if ((fabs(d_hx[ix] - Hx[ix]) > 1e-3) || isnan(local_err))
         {
             //printf("At index %d: %.15f vs. %.15f\n", ix, fabs(psi_new[ix]), fabs(psi_chk[ix]));
             err_count = err_count + 1;
+            /*printf("gpu: %.15f\n",d_hx[ix]);
+            printf("cpu: %.15f\n",Hx[ix]);
+            printf("local err: %f, index :%d\n",local_err,ix);*/
         }
+        if (ix == 30488) {
+	    int ix = 30488;
+            printf("gpu: %f, iter: %d\n",d_hx[ix],time);
+            printf("cpu: %f\n",Hx[ix]);
+//            printf("local err: %f\n",local_err);
+            //printf("original x on gpu: %.15f\n",xrc[ix]);
+        }
+
     }
 
     if (err_count > 1) {
-        printf("There are %d errors out of %d entries!\n", err_count, ncol*DMnd);
+
+        printf("There are %d errors out of %d entries, %d th iteration!\n", err_count, ncol*DMnd,time);
         exit(0);
     }
     free(d_hx);
-  
+    time++;
+    count += (t2-t1)*1e3 ;
+printf("ha? %f\n",(t2-t1)*1e3 ); 
+printf("ha? %f\n",count ); 
     return (t2-t1)*1e3;
     
 }
