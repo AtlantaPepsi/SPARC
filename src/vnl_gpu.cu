@@ -54,9 +54,6 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             printf("gpu xrc: %f\n",xrc[ndc-1]);
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
 
-            /*double *chi;
-            cudaMalloc((void **)&chi,  ndc * nlocProj[type].nproj * sizeof(double));
-            cudaMemcpy(chi, nlocProj[type].Chi[atom], ndc * nlocProj[type].nproj * sizeof(double), cudaMemcpyHostToDevice);*/
 
             stat = cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N,
                                nlocProj[type].nproj, ncol, ndc,
@@ -66,23 +63,12 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
 
             if(stat!=CUBLAS_STATUS_SUCCESS) printf("error: %d\n",stat);
             gpuErrchk(cudaPeekAtLastError() );    
-            /*printf("displ: %d\n",pSPARC->IP_displ[atom_index]*ncol);
-            printf("ndc: %d\n",ndc);
-            printf("nnproj: %d\n",nlocProj[type].nproj);
-            printf("chi: %f\n",nlocProj[type].Chi[atom][ndc* nlocProj[type].nproj-2]);
-            printf("dv: %f\n",pSPARC->dV);
-            printf("chi: %f\n",chi[ndc-1]);*/
+            
 
             cudaFree(d_xrc);
         }
     } 
-    //printf("1st total: %f\n",(MPI_Wtime()-Start)*1e3);
 
-    //printf("xv exited safely\n\n");
-
-    /*double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
-    cudaMemcpy(af, d_alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol * sizeof(double), cudaMemcpyDeviceToHost);
-    printf("alpha copy:%f \n", af[0]);*/
 
     /* if there are domain parallelization over each band,
      * we need to sum over all processes over domain comm */
@@ -111,12 +97,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
     Vnl_gammaV<<<gridDim, blockDims>>>(d_SPARC, d_alpha, ncol);
     //printf("2nd total: %f\n",(MPI_Wtime()-Start)*1e3);
 
-    /*double *af = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
-    cudaMemcpy(af, d_alpha, pSPARC->IP_displ[pSPARC->n_atom] * ncol * sizeof(double), cudaMemcpyDeviceToHost);
-    printf("alpha copy:%f \n", af[0]);*/
-
     gpuErrchk(cudaPeekAtLastError() );    
-    //printf("gamma exited safely\n\n");
             
 
     /* multiply the inner product and the nonlocal projector */
@@ -136,10 +117,7 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             gpuErrchk(cudaPeekAtLastError() );    
 
             int atom_index = Atom_Influence_nloc[type].atom_index[atom];
-            
-            /*double *chi;
-            cudaMalloc((void **)&chi,  ndc * nlocProj[type].nproj * sizeof(double));
-            cudaMemcpy(chi, nlocProj[type].Chi[atom], ndc * nlocProj[type].nproj * sizeof(double), cudaMemcpyHostToDevice);*/
+
   
             stat = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,                ///!
                                ndc, ncol, nlocProj[type].nproj,
@@ -153,7 +131,6 @@ void Vnl_gpu(const min_SPARC_OBJ *pSPARC, const ATOM_NLOC_INFLUENCE_OBJ *Atom_In
             cudaFree(Vnlx);                                       /////! persistence issue
         }
     }
-    //printf("3rd total: %f\n",(MPI_Wtime()-Start)*1e3);
 
     cudaFree(d_alpha);
     cublasDestroy(handle);
@@ -179,13 +156,7 @@ void x_rc(double *d_xrc, double *d_x, const ATOM_NLOC_INFLUENCE_OBJ *d_Atom_Infl
 
     if (index < ndc && n < ncol)
         d_xrc[n*ndc+index] = d_x[n*DMnd + shared_grid_pose[threadIdx.x]];                       ///?
-    
-    //if (index==0){//&&n==0)
-    /*printf("test1: %d\n",d_Atom_Influence_nloc->atom_index[0]);
-    printf("test2: %d\n",d_Atom_Influence_nloc->grid_pos[0][3]);
-    printf("test3: %d\n",ndc);
-    printf("test4: %f\n",d_xrc[n*ndc+index]); */
-    //}
+
 
 }
 
@@ -210,16 +181,9 @@ void Vnl_gammaV(const min_SPARC_OBJ *d_SPARC, double *d_alpha, int ncol)
         }
     }
 
-    //printf("type: %d, atom: %d, ndc: %d, n: %d\n",type,i,index,n);        
 
     int leftover = index - d_SPARC->IP_displ[i-1];
     
-    //if (index ==  1)  {
-    //printf("type: %d, atom: %d, ndc: %d, n: %d\n",type,i,index,n);        
-    //printf("bool: %p\n", /*leftover); - ( revotfel +*/ (d_SPARC->ppl));//*(2*l+1) ) > 0);
-    //printf("bool: %p\n", /*leftover); - ( revotfel +*/ (d_SPARC->ppl[1]));//*(2*l+1) ) > 0);
-    //printf("bllo: %p\n", /*leftover); - ( revotfel +*/ (d_SPARC->Gamma[1]));//*(2*l+1) ) > 0);
-    //}
         
     //int nproj = d_SPARC->IP_displ[i+1] - d_SPARC->IP_displ[i];
     //leftover %= nproj;
